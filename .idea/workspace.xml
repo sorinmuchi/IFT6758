@@ -20,7 +20,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7cd87268-245c-46a2-aa0b-0520bcec5b1c" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/notebooks/Question 5.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/Question 1 sample.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/Question 1 sample.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/Question 5.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/Question 5.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -113,10 +115,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1632849956735" />
-    <state x="530" y="214" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1633147325764">
+    <state x="530" y="214" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1633558940393">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="530" y="214" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1536.824@0.0.1536.824" timestamp="1633147325764" />
+    <state x="530" y="214" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1536.824@0.0.1536.824" timestamp="1633558940393" />
     <state width="1493" height="66" key="GridCell.Tab.0.bottom" timestamp="1632859193854">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -133,10 +135,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1493" height="66" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1632859193854" />
-    <state x="147" y="65" key="MergeDialog" timestamp="1633142082477">
+    <state x="147" y="65" key="MergeDialog" timestamp="1633547947748">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="147" y="65" key="MergeDialog/0.0.1536.824@0.0.1536.824" timestamp="1633142082477" />
+    <state x="147" y="65" key="MergeDialog/0.0.1536.824@0.0.1536.824" timestamp="1633547947748" />
     <state x="277" y="57" key="SettingsEditor" timestamp="1632850426304">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -146,9 +148,9 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="578" y="326" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1536.824@0.0.1536.824" timestamp="1633525546020" />
-    <state x="502" y="125" key="git4idea.branch.GitSmartOperationDialog" timestamp="1633147280411">
+    <state x="502" y="125" key="git4idea.branch.GitSmartOperationDialog" timestamp="1633547930492">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="502" y="125" key="git4idea.branch.GitSmartOperationDialog/0.0.1536.824@0.0.1536.824" timestamp="1633147280411" />
+    <state x="502" y="125" key="git4idea.branch.GitSmartOperationDialog/0.0.1536.824@0.0.1536.824" timestamp="1633547930492" />
   </component>
 </project>
