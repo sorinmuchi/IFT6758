@@ -4,7 +4,8 @@ import pandas as pd
 
 
 class NHL_TIDY:
-    
+
+    @staticmethod
     def tidyGame(inputGame):
         fullGame=inputGame
         game = fullGame['liveData']['plays']['allPlays']
@@ -196,7 +197,8 @@ class NHL_TIDY:
                            'teamOfShooter':teamOfShooter,'homeOrAway':homeOrAway,'xCoord':xCoord,'yCoord':yCoord,'shooter':shooter,'goalie':goalie,
                            'shotType':shotType,'emptyNet':emptyNet,'strength':strength, 'season':season,'rinkSide':rinkSide,'gameType':gameType,'totalPlayTime':totalPlayTime})
         return df
-    
+
+    @staticmethod
     def dfConcat(seasonList):
         df=seasonList[0]
         j=1
