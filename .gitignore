@@ -4,6 +4,7 @@
 *.tar.gz
 *.pkl
 *.json
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -134,3 +135,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# MacOS-only
+.DS_Store
