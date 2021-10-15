@@ -164,7 +164,18 @@ class NHL_TIDY:
     
         if int(dateformat[0])>=60:
             if len(str(int(dateformat[0])-60))==2:
-                stringTotalPlayTime = "0"+str(int(int(dateformat[0])/60))+":"+str(int(dateformat[0])-60)+":"+str(dateformat[1])
+
+                if int(int(dateformat[0])/60) == 2:
+
+                    if int(dateformat[0]) >=120 and int(dateformat[0]) <= 129:         
+                        stringTotalPlayTime = "0"+str(int(int(dateformat[0])/60))+":0"+str(int(dateformat[0])-120)+":"+str(dateformat[1])
+                    else:
+                        stringTotalPlayTime = "0"+str(int(int(dateformat[0])/60))+":"+str(int(dateformat[0])-120)+":"+str(dateformat[1])
+                else:
+
+                    stringTotalPlayTime = "0"+str(int(int(dateformat[0])/60))+":"+str(int(dateformat[0])-60)+":"+str(dateformat[1])
+
+
             if len(str(int(dateformat[0])-60))==1:
                 stringTotalPlayTime = "0"+str(int(int(dateformat[0])/60))+":0"+str(int(dateformat[0])-60)+":"+str(dateformat[1]) 
         else:
