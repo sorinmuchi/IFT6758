@@ -13,3 +13,4 @@ jupyterlab>=3.0.0
 setuptools
 python-dotenv
 xgboost
+comet_ml
