@@ -1,3 +1,8 @@
+from comet_ml import Experiment
+from comet_ml import API
+import os
+from dotenv import load_dotenv
+import warnings
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression
@@ -7,26 +12,48 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
+from joblib import dump, load
+
+
+warnings.filterwarnings("ignore")
+load_dotenv('../.env')
+COMET_API_KEY = os.getenv('COMET_API_KEY')
+COMET_PROJECT_NAME = os.getenv('COMET_PROJECT_NAME')
+COMET_WORKSPACE = os.getenv('COMET_WORKSPACE')
+
+
+def register_comet_model(workspace, project, experiment, model):
+    api = API()
+    experiment = api.get(f"{workspace}/{project}/{experiment}")
+    experiment.register_model(f"{model}")
+
+# create a comet.ml experiment for dataset stats
+exp0 = Experiment(
+    api_key=COMET_API_KEY,
+    project_name=COMET_PROJECT_NAME,
+    workspace=COMET_WORKSPACE,
+)
+exp0.set_name('Task-3/dataset-stats')
 
 
 ### Read and preprocess data ###
-df = pd.read_csv('../data/AllSeasonsM2Q2.csv')
-df = df.drop('Unnamed: 0', axis=1)
-df = df[['distance', 'angle', 'Goal']]
-df = df.rename({'Goal': 'is_goal'}, axis=1)
-df = df[~(df['is_goal'].isnull() | df['distance'].isnull() | df['angle'].isnull())] #remove after fix
+df = pd.read_csv('../data/trainingSet.csv')
+df = df[['distanceFromNet', 'angle', 'Goal']]
+df = df.rename({'Goal': 'is_goal', 'distanceFromNet': 'distance'}, axis=1)
+df = df.dropna().reset_index(drop=True)
 df['is_goal'] = df['is_goal'].astype(np.int64)
-df.head()
 
 
 ### Split data ###
 X = df[['distance', 'angle']]
 y = df['is_goal'].to_numpy()
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=0)
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=123)
 
 print(f'Dataset size: {len(X)}')
 print(f'Training dataset size: {len(X_train)}')
 print(f'Validation dataset size: {len(X_val)}')
+
+exp0.log_metrics({'Dataset size': len(X), 'Training dataset size': len(X_train), 'Validation dataset size': len(X_val)})
 
 
 ### dataset stats: goals rate ###
@@ -44,8 +71,21 @@ print(f'** ALL ** Goals rate: {gr1} - Non-goals rate: {1-gr1}')
 print(f'** Training ** Goals rate: {gr2} - Non-goals rate: {1-gr2}')
 print(f'** Validation ** Goals rate: {gr3} - Non-goals rate: {1-gr3}')
 
+exp0.log_metrics({'ALL - Goals rate': gr1, 'ALL - non-goals rate': 1-gr1})
+exp0.log_metrics({'Training - Goals rate': gr2, 'Training - non-goals rate': 1-gr2})
+exp0.log_metrics({'Validation - Goals rate': gr3, 'Validation - non-goals rate': 1-gr3})
+
+exp0.end()
+
 
 ### Logistic regression on distance ###
+exp1 = Experiment(
+    api_key=COMET_API_KEY,
+    project_name=COMET_PROJECT_NAME,
+    workspace=COMET_WORKSPACE,
+)
+exp1.set_name('Task-3/LR(distance)')
+
 X_train1 = X_train['distance'].to_numpy().reshape(-1, 1)
 X_val1 = X_val['distance'].to_numpy().reshape(-1, 1)
 
@@ -58,8 +98,21 @@ print('***** Logistic regression (distance) *****')
 print(f'Training accuracy: {train_score1}')
 print(f'Test accuracy: {val_score1}')
 
+exp1.log_metrics({'Training-accuracy': train_score1, 'Validation-accuracy': val_score1})
+
+dump(lr_clf1, '../models/3-lr_distance.joblib')
+exp1.log_model("LR (distance) Model", "../models/3-lr_distance.joblib")
+exp1.end()
+register_comet_model(COMET_WORKSPACE, COMET_PROJECT_NAME, 'Task-3/LR(distance)', 'LR (distance) Model')
+
 
 ### Logistic regression on angle ###
+exp2 = Experiment(
+    api_key=COMET_API_KEY,
+    project_name=COMET_PROJECT_NAME,
+    workspace=COMET_WORKSPACE,
+)
+exp2.set_name('Task-3/LR(angle)')
 
 X_train2 = X_train['angle'].to_numpy().reshape(-1, 1)
 X_val2 = X_val['angle'].to_numpy().reshape(-1, 1)
@@ -73,8 +126,22 @@ print('***** Logistic regression (angle) *****')
 print(f'Training accuracy: {train_score2}')
 print(f'Test accuracy: {val_score2}')
 
+exp2.log_metrics({'Training-accuracy': train_score2, 'Validation-accuracy': val_score2})
+
+dump(lr_clf2, '../models/3-lr_angle.joblib')
+exp2.log_model("LR (angle) Model", "../models/3-lr_angle.joblib")
+exp2.end()
+register_comet_model(COMET_WORKSPACE, COMET_PROJECT_NAME, 'Task-3/LR(angle)', 'LR (angle) Model')
+
+
 
 ### Logistic regression on distance + angle ###
+exp3 = Experiment(
+    api_key=COMET_API_KEY,
+    project_name=COMET_PROJECT_NAME,
+    workspace=COMET_WORKSPACE,
+)
+exp3.set_name('Task-3/LR(distance+angle)')
 
 X_train3 = X_train.to_numpy().reshape(-1, 2)
 X_val3 = X_val.to_numpy().reshape(-1, 2)
@@ -87,6 +154,14 @@ val_score3 = lr_clf3.score(X_val3, y_val)
 print('***** Logistic regression (distance+angle) *****')
 print(f'Training accuracy: {train_score3}')
 print(f'Test accuracy: {val_score3}')
+
+exp3.log_metrics({'Training-accuracy': train_score3, 'Validation-accuracy': val_score3})
+
+
+dump(lr_clf3, '../models/3-lr_distance_angle.joblib')
+exp3.log_model("LR (distance+angle) Model", "../models/3-lr_distance_angle.joblib")
+exp3.end()
+register_comet_model(COMET_WORKSPACE, COMET_PROJECT_NAME, 'Task-3/LR(distance+angle)', 'LR (distance+angle) Model')
 
 
 ### Random baseline ###
@@ -207,16 +282,19 @@ plt.savefig('../figures/goal_rate_percentile_2.png')
 
 ### --PLOT 4-- Reliability diagram (Calibration curve) ###
 fig, ax = plt.subplots(figsize=(6, 6))
-disp1 = CalibrationDisplay.from_estimator(lr_clf1, X_val1, y_val, label='Logistic Regression (distance)', ax=ax)
-disp2 = CalibrationDisplay.from_estimator(lr_clf2, X_val2, y_val, label='Logistic Regression (angle)', ax=ax)
-disp3 = CalibrationDisplay.from_estimator(lr_clf3, X_val3, y_val, label='Logistic Regression (distance+angle)', ax=ax)
-disp4 = CalibrationDisplay.from_estimator(random_clf, X_val3, y_val, label='Random', ax=ax)
+disp1 = CalibrationDisplay.from_estimator(lr_clf1, X_val1, y_val, label='Logistic Regression (distance)', marker="P", ax=ax)
+disp2 = CalibrationDisplay.from_estimator(lr_clf2, X_val2, y_val, label='Logistic Regression (angle)', marker="*", ax=ax)
+disp3 = CalibrationDisplay.from_estimator(lr_clf3, X_val3, y_val, label='Logistic Regression (distance+angle)', marker="h", ax=ax)
+disp4 = CalibrationDisplay.from_estimator(random_clf, X_val3, y_val, label='Random', marker="s", ax=ax)
+ax.legend(loc='upper left')
 plt.show()
 plt.savefig('../figures/calibration_diagram.png')
 
 
-# Do all the 3 logistic regression models always predict 0 as it is the dominating label ?!
+# Do all the 3 logistic regression models always predict 0 as it is the dominating label ?!  YES!
 print(np.sum([round(p) for p in lr_probs1]), np.sum([round(p) for p in lr_probs2]), np.sum([round(p) for p in lr_probs3]))
+
+
 
 
 
