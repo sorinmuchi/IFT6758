@@ -12,3 +12,8 @@ ipykernel
 jupyterlab>=3.0.0
 setuptools
 python-dotenv
+xgboost
+notebook
+python-dotenv
+scikit-learn
+comet_ml
