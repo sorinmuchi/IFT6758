@@ -138,3 +138,6 @@ dmypy.json
 
 # MacOS-only
 .DS_Store
+
+# Custom
+/notebooks/models
