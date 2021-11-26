@@ -9,10 +9,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.dummy import DummyClassifier
 from sklearn.calibration import CalibrationDisplay
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import brier_score_loss
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score
-from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 from joblib import dump, load
 
@@ -39,17 +37,19 @@ exp0.set_name('Task-3/dataset-stats')
 
 
 ### Read and preprocess data ###
-df = pd.read_csv('../data/trainingSet.csv')
-df = df[['distanceFromNet', 'angle', 'Goal']]
-df = df.rename({'Goal': 'is_goal', 'distanceFromNet': 'distance'}, axis=1)
-df = df.dropna().reset_index(drop=True)
+df = pd.read_csv('../data/AllSeasonsM2Q2.csv')
+df = df.drop('Unnamed: 0', axis=1)
+df = df[['distance', 'angle', 'Goal']]
+df = df.rename({'Goal': 'is_goal'}, axis=1)
+df = df[~(df['is_goal'].isnull() | df['distance'].isnull() | df['angle'].isnull())] #remove after fix
 df['is_goal'] = df['is_goal'].astype(np.int64)
+df.head()
 
 
 ### Split data ###
 X = df[['distance', 'angle']]
 y = df['is_goal'].to_numpy()
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=123)
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=0)
 
 print(f'Dataset size: {len(X)}')
 print(f'Training dataset size: {len(X_train)}')
@@ -199,10 +199,10 @@ lr_fpr3, lr_tpr3, _ = roc_curve(y_val, lr_probs3)
 random_fpr, random_tpr, _ = roc_curve(y_val, random_probs)
 
 plt.figure(figsize=(6, 6))
-plt.plot(lr_fpr1, lr_tpr1, linestyle='-.', label='Logistic Regression (distance)')
-plt.plot(lr_fpr2, lr_tpr2, linestyle='-', label='Logistic Regression (angle)')
-plt.plot(lr_fpr3, lr_tpr3, linestyle=':', label='Logistic Regression (distance + angle)')
-plt.plot(random_fpr, random_tpr, linestyle='--', label='Random')
+plt.plot(lr_fpr1, lr_tpr1, marker='.', label='Logistic Regression (distance)')
+plt.plot(lr_fpr2, lr_tpr2, marker='.', label='Logistic Regression (angle)')
+plt.plot(lr_fpr3, lr_tpr3, marker='.', label='Logistic Regression (distance + angle)')
+plt.plot(random_fpr, random_tpr, linestyle='--', marker='.', label='Random')
 plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.legend()
@@ -213,149 +213,90 @@ plt.savefig('../figures/roc.png')
 def compute_goal_rate_per_percentile(probs, y):
     percentiles = []
     rates = []
-
     for i in range(0, 101):
         percentile = np.percentile(probs, i)
-        r_percentile = round(percentile, 2)
         goals = 0
         no_goals = 0
         for idx, p in enumerate(probs):
-            if round(p, 2) == r_percentile:
-                if y[idx] == 1:
-                    goals += 1
+            if p<=percentile:
+                if y[idx]==1:
+                    goals+=1
                 else:
-                    no_goals += 1
-        rate = goals * 100 / (goals + no_goals)
+                    no_goals+=1
+        rate = goals / (goals + no_goals)
         percentiles.append(percentile)
         rates.append(rate)
     return percentiles, rates
-
 
 percentiles1, rates1 = compute_goal_rate_per_percentile(lr_probs1, y_val)
 percentiles2, rates2 = compute_goal_rate_per_percentile(lr_probs2, y_val)
 percentiles3, rates3 = compute_goal_rate_per_percentile(lr_probs3, y_val)
 percentiles4, rates4 = compute_goal_rate_per_percentile(random_probs, y_val)
 
-
 plt.figure(figsize=(6, 6))
-plt.plot(percentiles1, rates1, linestyle='-.', label='Logistic Regression (distance)')
-plt.plot(percentiles2, rates2, linestyle='-', label='Logistic Regression (angle)')
-plt.plot(percentiles3, rates3, linestyle=':', label='Logistic Regression (distance+angle)')
-plt.plot(percentiles4, rates4, linestyle='--', label='Random')
+plt.plot(percentiles1, rates1, marker='.', label='Logistic Regression (distance)')
+plt.plot(percentiles2, rates2, marker='.', label='Logistic Regression (angle)')
+plt.plot(percentiles3, rates3, marker='.', label='Logistic Regression (distance+angle)')
+plt.plot(percentiles4, rates4, marker='.', label='Random')
 plt.xlabel('Shot probability model percentile')
 plt.ylabel('Goal rate')
-plt.title('Goal rate')
-plt.ylim([0, 100])
-plt.xlim([0, 1])
 plt.legend()
 plt.show()
 plt.savefig('../figures/goal_rate_percentile_1.png')
 
 
 ### --PLOT 3-- cumulative portion of goals = F(shot probability model percentile) ###
-def compute_cumulative_propotion_of_goals_per_percentile(probs, y):
+def compute_cumulative_goal_rate_per_percentile(probs, y):
     percentiles = []
-    cum_rates = []
+    rates = []
     cum_rate = 0
-    total_goals = sum(y)
-    cum_goals = 0
     for i in range(0, 101):
         percentile = np.percentile(probs, i)
+        goals = 0
+        no_goals = 0
         for idx, p in enumerate(probs):
             if p<=percentile:
                 if y[idx]==1:
-                    cum_goals+=1
-        cum_rate = cum_goals * 100 / total_goals
+                    goals+=1
+                else:
+                    no_goals+=1
+        cum_rate += goals / (goals + no_goals)
         percentiles.append(percentile)
-        cum_rates.append(cum_rate)
-    return percentiles, cum_rates
+        rates.append(cum_rate)
+    return percentiles, rates
 
-percentiles1, rates1 = compute_cumulative_propotion_of_goals_per_percentile(lr_probs1, y_val)
-percentiles2, rates2 = compute_cumulative_propotion_of_goals_per_percentile(lr_probs2, y_val)
-percentiles3, rates3 = compute_cumulative_propotion_of_goals_per_percentile(lr_probs3, y_val)
-percentiles4, rates4 = compute_cumulative_propotion_of_goals_per_percentile(random_probs, y_val)
+percentiles1, rates1 = compute_cumulative_goal_rate_per_percentile(lr_probs1, y_val)
+percentiles2, rates2 = compute_cumulative_goal_rate_per_percentile(lr_probs2, y_val)
+percentiles3, rates3 = compute_cumulative_goal_rate_per_percentile(lr_probs3, y_val)
+percentiles4, rates4 = compute_cumulative_goal_rate_per_percentile(random_probs, y_val)
 
 plt.figure(figsize=(6, 6))
-plt.plot(percentiles1, rates1, linestyle='-.', label='Logistic Regression (distance)')
-plt.plot(percentiles2, rates2, linestyle='-', label='Logistic Regression (angle)')
-plt.plot(percentiles3, rates3, linestyle=':', label='Logistic Regression (distance+angle)')
-plt.plot(percentiles4, rates4, linestyle='--', label='Random')
+plt.plot(percentiles1, rates1, marker='.', label='Logistic Regression (distance)')
+plt.plot(percentiles2, rates2, marker='.', label='Logistic Regression (angle)')
+plt.plot(percentiles3, rates3, marker='.', label='Logistic Regression (distance+angle)')
+plt.plot(percentiles4, rates4, marker='.', label='Random')
 plt.xlabel('Shot probability model percentile')
 plt.ylabel('Goal rate')
-plt.legend(loc='lower right')
-plt.ylim([0, 100])
-plt.xlim([0, 1])
-plt.title('Cumulative proportion of goals')
+plt.legend()
 plt.show()
 plt.savefig('../figures/goal_rate_percentile_2.png')
 
 
 ### --PLOT 4-- Reliability diagram (Calibration curve) ###
 fig, ax = plt.subplots(figsize=(6, 6))
-disp1 = CalibrationDisplay.from_estimator(lr_clf1, X_val1, y_val, label='Logistic Regression (distance)', marker="P", ax=ax)
-disp2 = CalibrationDisplay.from_estimator(lr_clf2, X_val2, y_val, label='Logistic Regression (angle)', marker="*", ax=ax)
-disp3 = CalibrationDisplay.from_estimator(lr_clf3, X_val3, y_val, label='Logistic Regression (distance+angle)', marker="h", ax=ax)
-disp4 = CalibrationDisplay.from_estimator(random_clf, X_val3, y_val, label='Random', marker="s", ax=ax)
-ax.legend(loc='upper left')
+disp1 = CalibrationDisplay.from_estimator(lr_clf1, X_val1, y_val, label='Logistic Regression (distance)', ax=ax)
+disp2 = CalibrationDisplay.from_estimator(lr_clf2, X_val2, y_val, label='Logistic Regression (angle)', ax=ax)
+disp3 = CalibrationDisplay.from_estimator(lr_clf3, X_val3, y_val, label='Logistic Regression (distance+angle)', ax=ax)
+disp4 = CalibrationDisplay.from_estimator(random_clf, X_val3, y_val, label='Random', ax=ax)
 plt.show()
 plt.savefig('../figures/calibration_diagram.png')
 
 
-
-### Evaluation of basic models
-print('####### Logistic Regression (distance) #######')
-target_names = ['Non-goal', 'Goal']
-preds1 = lr_clf1.predict(X_val1)
-brier1 = brier_score_loss(y_val, preds1)
-print(f'Training accuracy: {train_score1}' )
-print(f'Test accuracy: {val_score1}' )
-print(f'Brier score: {brier1}' )
-print(classification_report(y_val, preds1, target_names=target_names))
-
-print('####### Logistic Regression (angle) #######')
-target_names = ['Non-goal', 'Goal']
-preds2 = lr_clf2.predict(X_val2)
-brier2 = brier_score_loss(y_val, preds2)
-print(f'Training accuracy: {train_score2}' )
-print(f'Test accuracy: {val_score2}' )
-print(f'Brier score: {brier2}' )
-print(classification_report(y_val, preds2, target_names=target_names))
-
-print('####### Logistic Regression (distance+angle) #######')
-target_names = ['Non-goal', 'Goal']
-preds3 = lr_clf3.predict(X_val3)
-brier3 = brier_score_loss(y_val, preds3)
-print(f'Training accuracy: {train_score3}' )
-print(f'Test accuracy: {val_score3}' )
-print(f'Brier score: {brier3}' )
-print(classification_report(y_val, preds3, target_names=target_names))
-
-
-
 # Do all the 3 logistic regression models always predict 0 as it is the dominating label ?!
-# YES!
 print(np.sum([round(p) for p in lr_probs1]), np.sum([round(p) for p in lr_probs2]), np.sum([round(p) for p in lr_probs3]))
-# sum of all predictions for the different models is 0 ==>  the models are always predicting non-goals for all the inputs/events
-print(sum(lr_clf1.predict(X_train1)), sum(lr_clf2.predict(X_train2)), sum(lr_clf3.predict(X_train3)))
 
 
 
-#### ROC: optimal cutoff point for the different LR classifiers
 
-# Optimal cut-off point in ROC for LR(distance)
-fpr1, tpr1, thresholds1 = roc_curve(y_val, lr_probs1)
-best_cutoff1 = thresholds1[np.argmax(tpr1 - fpr1)]
-print("Threshold value is:", best_cutoff1)
 
-# Optimal cut-off point in ROC for LR(distance)
-fpr2, tpr2, thresholds2 = roc_curve(y_val, lr_probs2)
-best_cutoff2 = thresholds2[np.argmax(tpr2 - fpr2)]
-print("Threshold value is:", best_cutoff2)
-
-# Optimal cut-off point in ROC for LR(distance)
-fpr3, tpr3, thresholds3 = roc_curve(y_val, lr_probs3)
-best_cutoff3 = thresholds3[np.argmax(tpr3 - fpr3)]
-print("Threshold value is:", best_cutoff3)
-
-# ==> Now we have a better performance of our model since it is predicting expected goals instead of always predicting non-goal as before.
 
