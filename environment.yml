@@ -18,4 +18,3 @@ dependencies:
   - jupyterlab>=3.0.0
   - ipdb
   - python-dotenv
-  
