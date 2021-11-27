@@ -1,22 +1,25 @@
 # To add a new cell, type '# %%'
 # To add a new markdown cell, type '# %% [markdown]'
 # %%
+import comet_ml
+
 import os
 from dotenv import load_dotenv
 
 import numpy as np
 import pandas as pd
-import comet_ml
 
 from sklearn.dummy import DummyClassifier
 from fastai.tabular.all import *
 
-from sklearn.metrics import brier_score_loss, confusion_matrix, classification_report
-
 import matplotlib.pyplot as plt
 
-from sklearn.metrics import roc_curve, roc_auc_score, classification_report, PrecisionRecallDisplay, brier_score_loss
+from sklearn.metrics import f1_score, brier_score_loss, roc_auc_score, confusion_matrix, classification_report, roc_curve, PrecisionRecallDisplay 
 from sklearn.calibration import CalibrationDisplay
+
+
+# %%
+EXP_DESCRIPTION = 'CE-ES'
 
 
 # %%
@@ -28,151 +31,7 @@ exp = comet_ml.Experiment(
     project_name='ift6758',
     workspace='meriembchaaben',
 )
-exp.set_name('Question6/YourBestShot-fastai')
-
-
-# %%
-path = '../data/M2Data'
-# df = pd.read_csv(f'{path}/trainingSet.csv')
-
-# df['strength'] = df['strength2']
-
-# df['rebound'] = df.rebound.astype(int)
-# df['Goal'] = df['Goal'].astype(int)
-# df['EmptyNet'] = df['EmptyNet'].astype(int)
-
-# df.fillna({'changeInAngleShot': 0}, inplace=True)
-
-# df = df.drop(labels=[
-#     'totalPlayTime', 'gameID', 'eventType',
-#     'periodTime',
-#     'lastEventPeriodTime',
-#     'strength2',
-#     'lastEventAngle',
-#     'lastEventGameSeconds',
-#     'emptyNet',
-#     'lastEventPeriod',
-#     'xCoord', 'yCoord',
-#     'lastEventXCoord', 'lastEventYCoord',
-#     'index',
-# ], axis=1, errors='ignore')
-
-# df.replace({
-#     'Goal':
-#         {
-#             0: 'Shot',
-#             1: 'Goal',
-#         }
-#     }, inplace=True)
-
-# df.to_csv(f'{path}/traningSetFastAI.csv', index=False)
-
-df = pd.read_csv(f'{path}/traningSetFastAI.csv')
-
-
-# %%
-# Train / Valid Split
-season_split = 2018
-train_ix, valid_ix = df[df.season < season_split].index, df[df.season >= season_split].index
-
-X, y = df.drop(labels='Goal', axis=1), df['Goal']
-train_df, valid_df = df.iloc[train_ix], df.iloc[valid_ix]
-
-X_train, X_val, y_train, y_val = X.iloc[train_ix], X.iloc[valid_ix], y.iloc[train_ix], y.iloc[valid_ix]
-
-# exp.log_dataset_info(name='trainingSet.csv', version='2021-11-17', path=f'{PATH_REL_PREFIX}/data/M2Data/trainingSet.csv')
-
-# for dataset in [X_train, X_val, y_train, y_val]:
-#     exp.log_dataset_hash(dataset)
-
-X_train.shape, X_train.columns, y_train.shape, y_train.name
-
-
-# %%
-cat_names = list(set(df.dtypes[df.dtypes == object].keys()) - set(['Goal'])) + [ 'period', 'season', 'EmptyNet', 'rebound']
-cont_names = [col for col in df.columns if col not in cat_names and col != 'Goal']
-
-
-# %%
-cat_names
-
-
-# %%
-cont_names
-
-
-# %%
-target = "Goal"
-
-
-# %%
-dls = TabularDataLoaders.from_df(train_df, y_names=target,
-    cat_names = cat_names,
-    cont_names = cont_names,
-    procs = [Categorify, FillMissing, Normalize])
-
-
-# %%
-splits = RandomSplitter(valid_pct=0.2)(range_of(train_df))
-print(type(splits), type(splits[0]), type(splits[1]))
-
-
-# %%
-to = TabularPandas(train_df, procs=[Categorify, FillMissing, Normalize],
-                   cat_names = cat_names,
-                   cont_names = cont_names,
-                   y_names=target,
-                   splits=splits)
-
-dls = to.dataloaders(bs=64, shuffle=True)
-
-
-# %%
-learn = tabular_learner(
-    dls, metrics=[F1Score(average='macro'), BalancedAccuracy(), BrierScore(pos_label=0)],
-    loss_func=FocalLossFlat(gamma=2),
-    # loss_func=BCEWithLogitsLossFlat(),
-    cbs=[
-            # EarlyStoppingCallback(monitor='f1_score', min_delta=0.0001, patience=5),
-            SaveModelCallback(fname='best', monitor='f1_score'),
-            SaveModelCallback(fname='end', at_end=True)
-        ]
-    )
-lr_min, lr_steep, lr_valley, lr_slide = learn.lr_find(suggest_funcs=(minimum, steep, valley, slide))
-
-
-# %%
-with exp.train():
-    # learn.fit_one_cycle(5, lr_min)
-    learn.fit_sgdr(20,2)
-
-
-exp.log_model("FastAI Best Model", "models/best.pth")
-exp.log_model("FastAI Final Model", "models/end.pth")
-
-
-# %%
-learn.recorder.plot_sched()
-
-
-# %%
-learn.recorder.plot_loss()
-
-
-# %%
-test_df = valid_df.copy()
-test_df.drop([target], axis=1, inplace=True)
-test_df.fillna({'angle': 0}, inplace=True)
-dl = learn.dls.test_dl(test_df, ignore_exceptions=True)
-y_pred = learn.get_preds(dl=dl)
-
-y_val_pred = np.argmin(y_pred[0], axis=1)
-val_y_pred_proba = np.array(y_pred[0][:,0])
-y_val_binary = y_val.replace({'Shot': 0, 'Goal': 1}).to_list()
-
-print(brier_score_loss(y_val_binary, val_y_pred_proba))
-print(confusion_matrix(y_val_binary, y_val_pred))
-print(classification_report(y_val_binary, y_val_pred, labels=[0, 1]))
+exp.set_name(f'Question6/YourBestShot-fastai-{EXP_DESCRIPTION}')
 
 
 # %%
@@ -216,11 +75,21 @@ def compute_cumulative_goal_rate_per_percentile(probs, y):
         return percentiles, rates
 
 
-def plot_metrics(learn, probs, val_y_pred_proba, y_val):
+def plot_metrics(learn, y_val_pred, val_y_pred_proba, y_val):
     params = {'classifier': 'FastAI NN'}
     random_clf = DummyClassifier(strategy="uniform").fit(X_train, y_train)
     random_probs = random_clf.predict_proba(X_val)[:, 1]
-    y_val_pred = probs
+
+    val_f1 = f1_score(y_val, y_val_pred, average='macro')
+    val_brier = brier_score_loss(y_val, y_val_pred)
+    
+    #F1 Score (Macro)
+    print(f'F1 Score (Macro) Validation: {val_f1}')
+    exp.log_metric('F1 Score (Macro) Validation', val_f1)
+
+    #Brier Score 
+    print(f'Brier Score Validation: {val_brier}')
+    exp.log_metric('Brier Score Validation', val_brier)
 
     # Log Model Architecture
     exp.log_text(learn.model)
@@ -295,39 +164,167 @@ def plot_metrics(learn, probs, val_y_pred_proba, y_val):
     plt.show()
 
 
+# %%
+path = '../data/M2Data'
+# df = pd.read_csv(f'{path}/trainingSet.csv')
+
+# df['strength'] = df['strength2']
+
+# df['rebound'] = df.rebound.astype(int)
+# df['Goal'] = df['Goal'].astype(int)
+# df['EmptyNet'] = df['EmptyNet'].astype(int)
+
+# df.fillna({'changeInAngleShot': 0}, inplace=True)
+
+# df = df.drop(labels=[
+#     'totalPlayTime', 'gameID', 'eventType',
+#     'periodTime',
+#     'lastEventPeriodTime',
+#     'strength2',
+#     'lastEventAngle',
+#     'lastEventGameSeconds',
+#     'emptyNet',
+#     'lastEventPeriod',
+#     'xCoord', 'yCoord',
+#     'lastEventXCoord', 'lastEventYCoord',
+#     'index',
+# ], axis=1, errors='ignore')
+
+# df.replace({
+#     'Goal':
+#         {
+#             0: 'Shot',
+#             1: 'Goal',
+#         }
+#     }, inplace=True)
+
+# df.to_csv(f'{path}/traningSetFastAI.csv', index=False)
+
+
+df = pd.read_csv(f'{path}/traningSetFastAI.csv')
+
+
+# %%
+# Train / Valid Split
+season_split = 2018
+train_ix, valid_ix = df[df.season < season_split].index, df[df.season >= season_split].index
+
+X, y = df.drop(labels='Goal', axis=1), df['Goal']
+train_df, valid_df = df.iloc[train_ix], df.iloc[valid_ix]
+
+X_train, X_val, y_train, y_val = X.iloc[train_ix], X.iloc[valid_ix], y.iloc[train_ix], y.iloc[valid_ix]
+
+# exp.log_dataset_info(name='trainingSet.csv', version='2021-11-17', path=f'{PATH_REL_PREFIX}/data/M2Data/trainingSet.csv')
+
+# for dataset in [X_train, X_val, y_train, y_val]:
+#     exp.log_dataset_hash(dataset)
+
+X_train.shape, X_train.columns, y_train.shape, y_train.name
+
+
+# %%
+cat_names = list(set(df.dtypes[df.dtypes == object].keys()) - set(['Goal'])) + [ 'period', 'season', 'EmptyNet', 'rebound']
+cont_names = [col for col in df.columns if col not in cat_names and col != 'Goal']
+
+
+# %%
+cat_names
+
+
+# %%
+cont_names
+
+
+# %%
+target = "Goal"
+
+
+# %%
+dls = TabularDataLoaders.from_df(train_df, y_names=target,
+    cat_names = cat_names,
+    cont_names = cont_names,
+    procs = [Categorify, FillMissing, Normalize])
+
+
+# %%
+splits = RandomSplitter(valid_pct=0.2)(range_of(train_df))
+print(type(splits), type(splits[0]), type(splits[1]))
+
+
+# %%
+to = TabularPandas(train_df, procs=[Categorify, FillMissing, Normalize],
+                   cat_names = cat_names,
+                   cont_names = cont_names,
+                   y_names=target,
+                   splits=splits)
+
+dls = to.dataloaders(bs=64, shuffle=True)
+
+
+# %%
+learn = tabular_learner(
+    dls, metrics=[F1Score(average='macro'), BalancedAccuracy(), BrierScore(pos_label=0)],
+    # loss_func=FocalLossFlat(gamma=2),
+    # loss_func=BCEWithLogitsLossFlat(),
+    cbs=[
+            EarlyStoppingCallback(monitor='f1_score', min_delta=0.0001, patience=5),
+            SaveModelCallback(fname='best', monitor='f1_score'),
+            SaveModelCallback(fname='end', at_end=True)
+        ]
+    )
+lr_min, lr_steep, lr_valley, lr_slide = learn.lr_find(suggest_funcs=(minimum, steep, valley, slide))
+
+
+# %%
+with exp.train():
+    # learn.fit_one_cycle(5, lr_min)
+    learn.fit_sgdr(5,2)
+
+
+exp.log_model("FastAI Best Model", "models/best.pth")
+exp.log_model("FastAI Final Model", "models/end.pth")
+
+
+# %%
+learn.recorder.plot_sched()
+
+
+# %%
+learn.recorder.plot_loss()
+
+
+# %%
+test_df = valid_df.copy()
+test_df.drop([target], axis=1, inplace=True)
+test_df.fillna({'angle': 0}, inplace=True)
+dl = learn.dls.test_dl(test_df, ignore_exceptions=True)
+y_pred = learn.get_preds(dl=dl)
+
+y_val_pred = np.argmin(y_pred[0], axis=1)
+val_y_pred_proba = np.array(y_pred[0][:,0])
+y_val_binary = y_val.replace({'Shot': 0, 'Goal': 1}).to_list()
+
+
+# %%
+with open(f'./predictions/fastai-{EXP_DESCRIPTION}.pkl', 'wb') as f:
+    pickle.dump(
+        { 
+            'model': 'fastai-{EXP_DESCRIPTION}.pkl',
+            'validation_set_predicted_probs': val_y_pred_proba,
+            'validation_set_predicted_labels': y_val_pred,
+            'validation_set_actual_labels': y_val_binary
+        },
+        f
+    )
+
+
+# %%
+# exp.log_artifact('./predictions/fastai-{EXP_DESCRIPTION}.pkl')
+
+
+# %%
 plot_metrics(learn, y_val_pred, val_y_pred_proba, y_val_binary)
 
 
 # %%
-
-
-
-# %%
-
-
-
-# %%
-
-
-
-# %%
-
-
-
-# %%
-
-
-
-# %%
-interp = ClassificationInterpretation.from_learner(learn)
-interp.top_losses(3)
-
-
-# %%
-interp.plot_confusion_matrix()
-
-
-# %%
 exp.end()
-
-
