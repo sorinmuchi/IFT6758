@@ -1,13 +1,10 @@
-# To add a new cell, type '# %%'
-# To add a new markdown cell, type '# %% [markdown]'
-# %%
 import comet_ml
 
 import os
 import pickle
 from dotenv import load_dotenv
 
-# from comet_ml import Experiment
+from comet_ml import Experiment
 
 import numpy as np
 import pandas as pd
@@ -48,7 +45,6 @@ exp = comet_ml.Experiment(
 exp.set_name(f'Question6/YourBestShot-{EXP_DESCRIPTION}')
 
 
-# %%
 def compute_goal_rate_per_percentile(probs, y):
     percentiles = []
     rates = []
@@ -286,7 +282,6 @@ def create_pipeline(params):
     return pipe
 
 
-# %%
 # Load Data
 df = pd.read_csv(f'{PATH_REL_PREFIX}/data/M2Data/trainingSet.csv')
 df['strength'] = df['strength2']
@@ -323,7 +318,6 @@ for dataset in [X_train, X_val, y_train, y_val]:
 X_train.shape, X_train.columns, y_train.shape, y_train.name
 
 
-# %%
 init_params = {
     'encoder': 'OrdinalEncoder',
     # 'feature_selection': 'RFE_XGBClassifier',
@@ -357,12 +351,10 @@ search = RandomizedSearchCV(
 print('BEST PARAMS:', search.best_params_)
 
 
-# %%
 pipe = search.best_estimator_
 pipe
 
 
-# %%
 # Score
 pipe = search.best_estimator_
 f1_weighted_scores = cross_val_score(pipe, X, y, scoring='f1_weighted', cv=tscv, n_jobs=-1)
@@ -378,17 +370,14 @@ exp.log_metric('Weighted F1 CV Mean Score Valid', np.mean(f1_weighted_scores))
 exp.log_metric('AUC ROC CV Mean Score Valid', np.mean(roc_auc_scores))
 
 
-# %%
 pipe.fit(X_train, y_train)
 
 
-# %%
 y_val_pred = pipe.predict(X_val)
 val_y_pred_proba = pipe.predict_proba(X_val)[:, 1]
 y_val_pred, val_y_pred_proba
 
 
-# %%
 with open(f'./predictions/sklearn-{EXP_DESCRIPTION}.pkl', 'wb') as f:
     pickle.dump(
         { 
@@ -401,33 +390,20 @@ with open(f'./predictions/sklearn-{EXP_DESCRIPTION}.pkl', 'wb') as f:
     )
 
 
-# %%
 plot_metrics(pipe)
 
 
-# %%
 # Refit #2: Refit Final Best Model on Entire Trainig Dataset
 pipe.fit(X, y)
 
 
-# %%
 with open(f'./models/sklearn-{EXP_DESCRIPTION}.pkl', 'wb') as f:
     pickle.dump(pipe,f)
 
 
-# %%
 exp.log_model('BEST MODEL - XGB', f'./models/sklearn-{EXP_DESCRIPTION}.pkl')
-
-
-# %%
-# brier_score_loss(y_train, y_pred_train), brier_score_loss(y_val, y_pred_val)
-
-
-# %%
 exp.end()
 
-
-# %%
 
 
 

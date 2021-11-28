@@ -1,9 +1,9 @@
 # To add a new cell, type '# %%'
 # To add a new markdown cell, type '# %% [markdown]'
-# %%
 import comet_ml
 
 import os
+import pickle
 from dotenv import load_dotenv
 
 import numpy as np
@@ -18,11 +18,9 @@ from sklearn.metrics import f1_score, brier_score_loss, roc_auc_score, confusion
 from sklearn.calibration import CalibrationDisplay
 
 
-# %%
 EXP_DESCRIPTION = 'CE-ES'
 
 
-# %%
 PATH_REL_PREFIX = '..'
 load_dotenv(f'{PATH_REL_PREFIX}/.env')
 COMET_API_KEY = os.getenv('COMET_API_KEY')
@@ -34,7 +32,6 @@ exp = comet_ml.Experiment(
 exp.set_name(f'Question6/YourBestShot-fastai-{EXP_DESCRIPTION}')
 
 
-# %%
 def compute_goal_rate_per_percentile(probs, y):
     percentiles = []
     rates = []
@@ -164,7 +161,6 @@ def plot_metrics(learn, y_val_pred, val_y_pred_proba, y_val):
     plt.show()
 
 
-# %%
 path = '../data/M2Data'
 # df = pd.read_csv(f'{path}/trainingSet.csv')
 
@@ -204,7 +200,6 @@ path = '../data/M2Data'
 df = pd.read_csv(f'{path}/traningSetFastAI.csv')
 
 
-# %%
 # Train / Valid Split
 season_split = 2018
 train_ix, valid_ix = df[df.season < season_split].index, df[df.season >= season_split].index
@@ -222,36 +217,29 @@ X_train, X_val, y_train, y_val = X.iloc[train_ix], X.iloc[valid_ix], y.iloc[trai
 X_train.shape, X_train.columns, y_train.shape, y_train.name
 
 
-# %%
 cat_names = list(set(df.dtypes[df.dtypes == object].keys()) - set(['Goal'])) + [ 'period', 'season', 'EmptyNet', 'rebound']
 cont_names = [col for col in df.columns if col not in cat_names and col != 'Goal']
 
 
-# %%
 cat_names
 
 
-# %%
 cont_names
 
 
-# %%
 target = "Goal"
 
 
-# %%
 dls = TabularDataLoaders.from_df(train_df, y_names=target,
     cat_names = cat_names,
     cont_names = cont_names,
     procs = [Categorify, FillMissing, Normalize])
 
 
-# %%
 splits = RandomSplitter(valid_pct=0.2)(range_of(train_df))
 print(type(splits), type(splits[0]), type(splits[1]))
 
 
-# %%
 to = TabularPandas(train_df, procs=[Categorify, FillMissing, Normalize],
                    cat_names = cat_names,
                    cont_names = cont_names,
@@ -261,7 +249,6 @@ to = TabularPandas(train_df, procs=[Categorify, FillMissing, Normalize],
 dls = to.dataloaders(bs=64, shuffle=True)
 
 
-# %%
 learn = tabular_learner(
     dls, metrics=[F1Score(average='macro'), BalancedAccuracy(), BrierScore(pos_label=0)],
     # loss_func=FocalLossFlat(gamma=2),
@@ -275,7 +262,6 @@ learn = tabular_learner(
 lr_min, lr_steep, lr_valley, lr_slide = learn.lr_find(suggest_funcs=(minimum, steep, valley, slide))
 
 
-# %%
 with exp.train():
     # learn.fit_one_cycle(5, lr_min)
     learn.fit_sgdr(5,2)
@@ -285,15 +271,12 @@ exp.log_model("FastAI Best Model", "models/best.pth")
 exp.log_model("FastAI Final Model", "models/end.pth")
 
 
-# %%
 learn.recorder.plot_sched()
 
 
-# %%
 learn.recorder.plot_loss()
 
 
-# %%
 test_df = valid_df.copy()
 test_df.drop([target], axis=1, inplace=True)
 test_df.fillna({'angle': 0}, inplace=True)
@@ -305,7 +288,6 @@ val_y_pred_proba = np.array(y_pred[0][:,0])
 y_val_binary = y_val.replace({'Shot': 0, 'Goal': 1}).to_list()
 
 
-# %%
 with open(f'./predictions/fastai-{EXP_DESCRIPTION}.pkl', 'wb') as f:
     pickle.dump(
         { 
@@ -318,13 +300,8 @@ with open(f'./predictions/fastai-{EXP_DESCRIPTION}.pkl', 'wb') as f:
     )
 
 
-# %%
 # exp.log_artifact('./predictions/fastai-{EXP_DESCRIPTION}.pkl')
 
-
-# %%
 plot_metrics(learn, y_val_pred, val_y_pred_proba, y_val_binary)
 
-
-# %%
 exp.end()
