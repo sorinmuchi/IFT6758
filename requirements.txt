@@ -13,4 +13,7 @@ jupyterlab>=3.0.0
 setuptools
 python-dotenv
 xgboost
+notebook
+scikit-learn
 comet_ml
+
