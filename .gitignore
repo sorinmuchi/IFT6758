@@ -138,9 +138,3 @@ dmypy.json
 
 # MacOS-only
 .DS_Store
-<<<<<<< HEAD
-=======
-
-# Custom
-/notebooks/models
->>>>>>> dev/sorin-2
