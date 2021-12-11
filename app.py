@@ -16,15 +16,16 @@ import sklearn
 import pandas as pd
 import joblib
 
-import ift6758
 
 import datetime
 import numpy as np
 from dotenv import load_dotenv
+
 from comet_ml import API
 
 load_dotenv('.env')
 LOG_FILE = os.environ.get('FLASK_LOG', 'flask.log')
+
 MODELS_DIR = os.getenv('MODELS_DIR', 'models/')
 COMET_WORKSPACE = os.getenv('COMET_WORKSPACE')
 DEFAULT_MODEL = os.getenv('DEFAULT_MODEL')
@@ -54,10 +55,10 @@ def before_first_request():
     setup logging handler, etc.)
     """
     # TODO: setup basic logging configuration
-    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', 
+    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S',
-                        filename=LOG_FILE, 
-                        level=logging.INFO, 
+                        filename=LOG_FILE,
+                        level=logging.INFO,
                         force=True)
 
     # TODO: any other initialization before the first request (e.g. load default model)
@@ -72,7 +73,7 @@ def logs():
     """Reads data from the log file and returns them as the response"""
     # Get POST json data
     app.logger.info(f'API call: /logs')
-    
+
     # TODO: read the log file specified and return the data
     # raise NotImplementedError("TODO: implement this endpoint")
     with open(LOG_FILE, "r") as f:
@@ -164,12 +165,14 @@ def predict():
     app.logger.info(json)
 
     global loaded_model
+    #column as 1 but rows as unknown
     features = np.array(json['features']).reshape(-1, 1)
     status_code = 200
     try:
         preds = loaded_model.predict(features)
         app.logger.info(preds)
     except Exception as e:
+
         preds = None
         status_code = 400
         app.logger.info('Error occured in prediction')
@@ -179,8 +182,14 @@ def predict():
     # raise NotImplementedError("TODO: implement this enpdoint")
     response = {
             'type': 'Success' if status_code==200 else 'Error',
-            'prediction': preds.tolist()
+            'prediction': preds.tolist() if status_code==200 else 'Error'
         }
 
     app.logger.info(response)
     return jsonify(response), status_code # response must be json serializable!
+
+
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

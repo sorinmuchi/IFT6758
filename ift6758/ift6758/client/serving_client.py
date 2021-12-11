@@ -27,13 +27,25 @@ class ServingClient:
         Args:
             X (Dataframe): Input dataframe to submit to the prediction service.
         """
+        data= {
+            "features": X,
+        }
+        response_API = requests.post(self.base_url+"/predict",data=data)
+        prediction=response_API["prediction"]
+        #columns are missing
+        results=pd.DataFrame(prediction,columns="")
+        return results
 
-        raise NotImplementedError("TODO: implement this function")
+        #raise NotImplementedError("TODO: implement this function")
 
-    def logs(self) -> dict:
+
+    def logs(self) -> str:
         """Get server logs"""
+        response_API =  requests.get(self.base_url + "/logs")
+        return response_API["content"]
 
-        raise NotImplementedError("TODO: implement this function")
+
+        #raise NotImplementedError("TODO: implement this function")
 
     def download_registry_model(self, workspace: str, model: str, version: str) -> dict:
         """
@@ -50,5 +62,17 @@ class ServingClient:
             model (str): The model in the Comet ML registry to download
             version (str): The model version to download
         """
+        data={
+            'workspace':workspace,
+            'model': model,
+            'version':version,
+            'filename':'DownloadedModel'
+        }
+        response_API = requests.post(self.base_url+"/download_registry_model",data=data)
+        return response_API
 
-        raise NotImplementedError("TODO: implement this function")
+        #raise NotImplementedError("TODO: implement this function")
+
+if __name__ == "__main__":
+
+    Client=ServingClient("127.0.0.1",5000)
