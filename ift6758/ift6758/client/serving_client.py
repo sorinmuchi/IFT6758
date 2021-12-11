@@ -7,14 +7,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class ServingClient:
+class gameClient:
     def __init__(self, ip: str = "0.0.0.0", port: int = 5000, features=None):
         self.base_url = f"http://{ip}:{port}"
         logger.info(f"Initializing client; base URL: {self.base_url}")
 
-        if features is None:
-            features = ["distance"]
-        self.features = features
 
         # any other potential initialization
 
@@ -31,9 +28,10 @@ class ServingClient:
             "features": X,
         }
         response_API = requests.post(self.base_url+"/predict",data=data)
-        prediction=response_API["prediction"]
-        #columns are missing
-        results=pd.DataFrame(prediction,columns="")
+        prediction=json.loads(response_API.text)["prediction"]
+        #columns are missing, make sure values are seperated to get one in each column (list ...)
+        prediction_=eval(prediction)
+        results=pd.DataFrame(prediction_,columns="")
         return results
 
         #raise NotImplementedError("TODO: implement this function")
@@ -42,7 +40,7 @@ class ServingClient:
     def logs(self) -> str:
         """Get server logs"""
         response_API =  requests.get(self.base_url + "/logs")
-        return response_API["content"]
+        return json.loads(response_API.text)["content"]
 
 
         #raise NotImplementedError("TODO: implement this function")
@@ -69,10 +67,10 @@ class ServingClient:
             'filename':'DownloadedModel'
         }
         response_API = requests.post(self.base_url+"/download_registry_model",data=data)
-        return response_API
+        return json.loads(response_API.text)
 
         #raise NotImplementedError("TODO: implement this function")
 
 if __name__ == "__main__":
 
-    Client=ServingClient("127.0.0.1",5000)
+    Client=gameClient("127.0.0.1",5000)
