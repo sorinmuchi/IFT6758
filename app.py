@@ -101,6 +101,7 @@ def download_registry_model():
             workspace: (required),
             model: (required),
             version: (required),
+            filename: (required)
             ... (other fields if needed) ...
         }
     
@@ -155,6 +156,11 @@ def download_registry_model():
 def predict():
     """
     Handles POST requests made to http://IP_ADDRESS:PORT/predict
+
+    Input JSON format:
+    {
+        features: (required)
+    }
 
     Returns predictions
     """
