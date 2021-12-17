@@ -29,11 +29,21 @@ MODELS_DIR = os.getenv('MODELS_DIR', 'models/')
 COMET_WORKSPACE = os.getenv('COMET_WORKSPACE')
 DEFAULT_MODEL = os.getenv('DEFAULT_MODEL')
 DEFAULT_VERSION = os.getenv('DEFAULT_VERSION')
-DEFAULT_FILENAME = os.getenv('DEFAULT_FILENAME')
+
 loaded_model = None
 
 
-def get_registered_comet_model(workspace=COMET_WORKSPACE, model=DEFAULT_MODEL, version=DEFAULT_VERSION, output_dir=MODELS_DIR, filename=DEFAULT_FILENAME):
+def get_registered_comet_model_file_name(workspace=COMET_WORKSPACE, model=DEFAULT_MODEL, version=DEFAULT_VERSION):
+    api = API()
+    try:
+        model_details = api.get_registry_model_details(COMET_WORKSPACE, model, version)
+        filename = model_details['assets'][0]['fileName']
+        return filename
+    except:
+        return None
+
+
+def get_registered_comet_model(filename, workspace=COMET_WORKSPACE, model=DEFAULT_MODEL, version=DEFAULT_VERSION, output_dir=MODELS_DIR):
     api = API()
     try:
         api.download_registry_model({workspace}, model, version, output_dir, expand=True)
@@ -62,8 +72,9 @@ def before_first_request():
 
     # TODO: any other initialization before the first request (e.g. load default model)
     app.logger.info('Flask app started')
+    filename = get_registered_comet_model_file_name()
     global loaded_model
-    loaded_model = get_registered_comet_model()
+    loaded_model = get_registered_comet_model(filename)
     app.logger.info('Default model loaded')
 
 
@@ -72,14 +83,17 @@ def logs():
     """Reads data from the log file and returns them as the response"""
     # Get POST json data
     app.logger.info(f'API call: /logs')
-    
+# 
+    app.logger.info('Flask app started')
+    filename = get_registered_comet_model_file_name()
+    global loaded_model
+    loaded_model = get_registered_comet_model(filename)
+    app.logger.info('Default model loaded')
+# 
     # TODO: read the log file specified and return the data
     # raise NotImplementedError("TODO: implement this endpoint")
     with open(LOG_FILE, "r") as f:
         content = f.read()
-
-    print(type(content))
-    print(content)
 
     response = {
             'type': 'Success',
@@ -101,7 +115,6 @@ def download_registry_model():
             workspace: (required),
             model: (required),
             version: (required),
-            filename: (required)
             ... (other fields if needed) ...
         }
     
@@ -114,9 +127,10 @@ def download_registry_model():
     workspace = json['workspace']
     model = json['model']
     version = json['version']
-    filename = json['filename']
+
 
     # TODO: check to see if the model you are querying for is already downloaded
+    filename = get_registered_comet_model_file_name(workspace, model, version)
     is_downloaded = os.path.isfile(f'{MODELS_DIR}/{filename}')
 
     # TODO: if yes, load that model and write to the log about the model change.  
