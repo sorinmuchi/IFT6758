@@ -45,13 +45,28 @@ WORKDIR /code
 
 
 # TODO: add code, optionally a default model if you want 
-
+COPY . .
 
 # TODO: install libs
-
+RUN pip install --upgrade pip
+RUN pip install -r ift6758/requirements.txt
+RUN pip install -e ift6758/
+RUN pip install waitress
 
 # TODO: expose ports (or do this in docker-compose)
-
+# ENV SERVER_PORT=6758
+EXPOSE 6758
 
 # TODO: specify default command - this is not required because you can always specify the command
 # either with the docker run command or in the docker-compose file
+# RUN chmod -R +x /code/run.sh
+
+# ARG KEDRO_UID=999
+# ARG KEDRO_GID=0
+# RUN groupadd -f -g ${KEDRO_GID} kedro_group && \
+# useradd -d /home/kedro -s /bin/bash -g ${KEDRO_GID} -u ${KEDRO_UID} kedro
+# RUN chown -R kedro:${KEDRO_GID} /home/kedro
+# USER kedro
+# RUN chmod -R a+w /home/kedro
+
+CMD ["sh", "-c", "waitress-serve --listen=0.0.0.0:6758 app:app"]
