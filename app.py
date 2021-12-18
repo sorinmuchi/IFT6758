@@ -18,7 +18,6 @@ import joblib
 
 import ift6758
 
-import datetime
 import numpy as np
 from dotenv import load_dotenv
 from comet_ml import API
@@ -86,7 +85,9 @@ def before_first_request():
 
     # Other initialization before the first request (load default model and start logging)
     app.logger.info('Flask app started')
+    # get filename of the default model
     filename = get_registered_comet_model_file_name()
+    # initialize current model and current model name
     global curr_model
     curr_model = get_registered_comet_model(filename)
     global curr_model_name
@@ -103,7 +104,7 @@ def logs():
     # read the log file
     with open(LOG_FILE, "r") as f:
         content = f.read()
-
+  
     response = {
             'type': 'Success',
             'content': str(content)
@@ -133,6 +134,7 @@ def download_registry_model():
     json = request.get_json()
     app.logger.info(json)
 
+    # get model information
     workspace = json['workspace']
     model = json['model']
     version = json['version']
@@ -142,12 +144,12 @@ def download_registry_model():
     filename = get_registered_comet_model_file_name(workspace, model, version)
     is_downloaded = os.path.isfile(f'{MODELS_DIR}/{filename}')
 
-    # TODO: if yes, load that model and write to the log about the model change.  
-    # eg: app.logger.info(<LOG STRING>)
     status_code = 200
     
     global curr_model
-    
+
+    # TODO: if yes, load that model and write to the log about the model change.  
+    # eg: app.logger.info(<LOG STRING>)
     if (is_downloaded):
         curr_model = joblib.load(f'{MODELS_DIR}/{filename}')
         app.logger.info('Model loaded from local repository')
@@ -164,11 +166,14 @@ def download_registry_model():
             app.logger.info('Error occured while trying to download model comet_ml')
             status_code = 400
 
+    # set current model name
     global curr_model_name
     curr_model_name = model
 
     # Tip: you can implement a "CometMLClient" similar to your App client to abstract all of this
     # logic and querying of the CometML servers away to keep it clean here
+
+    # Build and log response
     response = {
             'type': 'Success' if status_code==200 else 'Error',
             'content': 'Model loaded successfully' if status_code==200
@@ -176,6 +181,8 @@ def download_registry_model():
         }
 
     app.logger.info(response)
+
+    # return response and set status code
     return jsonify(response), status_code  # response must be json serializable!
 
 
@@ -199,6 +206,8 @@ def predict():
     global curr_model
     # features = np.array(json['features']).reshape(-1, 1)
     status_code = 200
+    
+    # feed model with features to generate prediction and log results
     try:
         features = json[features_map[curr_model_name]]
         preds = curr_model.predict(features)
@@ -207,14 +216,14 @@ def predict():
         preds = None
         status_code = 400
         app.logger.info('Error occured in prediction')
-    print(preds)
 
-    # TODO:
-    # raise NotImplementedError("TODO: implement this enpdoint")
+    # build and log reponse
     response = {
             'type': 'Success' if status_code==200 else 'Error',
             'prediction': preds.tolist()
         }
 
     app.logger.info(response)
+    
+    # return response and set status code
     return jsonify(response), status_code # response must be json serializable!
