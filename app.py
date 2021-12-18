@@ -66,6 +66,43 @@ def get_registered_comet_model(filename, workspace=COMET_WORKSPACE, model=DEFAUL
         return None
 
 
+# Logic of switching a model
+def switch_model(workspace, model, version):
+    # TODO: check to see if the model you are querying for is already downloaded
+    filename = get_registered_comet_model_file_name(workspace, model, version)
+    is_downloaded = os.path.isfile(f'{MODELS_DIR}/{filename}')
+
+    status_code = 200
+    
+    global curr_model
+
+    # TODO: if yes, load that model and write to the log about the model change.  
+    # eg: app.logger.info(<LOG STRING>)
+    if (is_downloaded):
+        curr_model = joblib.load(f'{MODELS_DIR}/{filename}')
+        app.logger.info('Model loaded from local repository')
+
+    # TODO: if no, try downloading the model: if it succeeds, load that model and write to the log
+    # about the model change. If it fails, write to the log about the failure and keep the 
+    # currently loaded model
+    else:
+        model = get_registered_comet_model(workspace=workspace, model=model, version=version, filename=filename)
+        if model:
+            curr_model = model
+            app.logger.info('Model downloaded successfully from comet_ml')
+        else:
+            app.logger.info('Error occured while trying to download model comet_ml')
+            status_code = 400
+
+    # set current model name
+    global curr_model_name
+    curr_model_name = model
+
+    return status_code
+
+
+
+#### Server initialization + endpoints ####
 
 app = Flask(__name__)
 
@@ -101,15 +138,13 @@ def logs():
 
     app.logger.info(f'API call: /logs')
     
+    status_code = 200
     # read the log file
     with open(LOG_FILE, "r") as f:
         content = f.read()
   
-    response = {
-            'type': 'Success',
-            'content': str(content)
-        }
-    return jsonify(response)  # response must be json serializable!
+    # return response and set status code
+    return jsonify(content), status_code  # response must be json serializable!
 
 
 @app.route("/download_registry_model", methods=["POST"])
@@ -135,49 +170,19 @@ def download_registry_model():
     app.logger.info(json)
 
     # get model information
+
     workspace = json['workspace']
     model = json['model']
     version = json['version']
 
-
-    # TODO: check to see if the model you are querying for is already downloaded
-    filename = get_registered_comet_model_file_name(workspace, model, version)
-    is_downloaded = os.path.isfile(f'{MODELS_DIR}/{filename}')
-
-    status_code = 200
-    
-    global curr_model
-
-    # TODO: if yes, load that model and write to the log about the model change.  
-    # eg: app.logger.info(<LOG STRING>)
-    if (is_downloaded):
-        curr_model = joblib.load(f'{MODELS_DIR}/{filename}')
-        app.logger.info('Model loaded from local repository')
-
-    # TODO: if no, try downloading the model: if it succeeds, load that model and write to the log
-    # about the model change. If it fails, write to the log about the failure and keep the 
-    # currently loaded model
-    else:
-        model = get_registered_comet_model(workspace=workspace, model=model, version=version, filename=filename)
-        if model:
-            curr_model = model
-            app.logger.info('Model downloaded successfully from comet_ml')
-        else:
-            app.logger.info('Error occured while trying to download model comet_ml')
-            status_code = 400
-
-    # set current model name
-    global curr_model_name
-    curr_model_name = model
-
     # Tip: you can implement a "CometMLClient" similar to your App client to abstract all of this
     # logic and querying of the CometML servers away to keep it clean here
+    status_code = switch_model(workspace, model, version)
 
     # Build and log response
     response = {
-            'type': 'Success' if status_code==200 else 'Error',
-            'content': 'Model loaded successfully' if status_code==200
-            else 'Error occured while trying to download model from comet_ml.'
+            'message': 'Model loaded successfully' if status_code==200
+            else 'Error occured while trying to download model from comet_ml'
         }
 
     app.logger.info(response)
@@ -209,21 +214,16 @@ def predict():
     
     # feed model with features to generate prediction and log results
     try:
-        features = json[features_map[curr_model_name]]
-        preds = curr_model.predict(features)
+        df = pd.read_json(json)
+        features = df[features_map[curr_model_name]]
+        preds = curr_model.predict_proba(features)[:,1]
         app.logger.info(preds)
     except Exception as e:
         preds = None
         status_code = 400
         app.logger.info('Error occured in prediction')
 
-    # build and log reponse
-    response = {
-            'type': 'Success' if status_code==200 else 'Error',
-            'prediction': preds.tolist()
-        }
+    app.logger.info(preds)
 
-    app.logger.info(response)
-    
     # return response and set status code
-    return jsonify(response), status_code # response must be json serializable!
+    return jsonify(preds.tolist()), status_code # response must be json serializable!
