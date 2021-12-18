@@ -23,26 +23,40 @@ import numpy as np
 from dotenv import load_dotenv
 from comet_ml import API
 
+# load environment variables defined in .env variables
 load_dotenv('.env')
+
+# Load environment variables. If not defied, default values are assigned
 LOG_FILE = os.environ.get('FLASK_LOG', 'flask.log')
 MODELS_DIR = os.getenv('MODELS_DIR', 'models/')
 COMET_WORKSPACE = os.getenv('COMET_WORKSPACE')
 DEFAULT_MODEL = os.getenv('DEFAULT_MODEL')
 DEFAULT_VERSION = os.getenv('DEFAULT_VERSION')
 
-loaded_model = None
+ # a dictionary that maps each model to the features it uses: model->features (I had to do this after asking the TA on piazza)
+features_map = {
+    'final-best-task-6-xgb': [], # []: means the model uses all the features
+    'xgboost-task5-model': ['distance', 'angle'],
+    'lr-angle-model': ['angle'],
+    'lr-distance-model': ['distance'],
+    'lr-distance-angle-model': ['distance', 'angle']
+}
 
+# current model loaded in the server
+curr_model = None
+curr_model_name = None
 
+# This function automatically retrieves the assets' information (filename) of a registered model from comet_ml
 def get_registered_comet_model_file_name(workspace=COMET_WORKSPACE, model=DEFAULT_MODEL, version=DEFAULT_VERSION):
     api = API()
     try:
-        model_details = api.get_registry_model_details(COMET_WORKSPACE, model, version)
+        model_details = api.get_registry_model_details(workspace, model, version)
         filename = model_details['assets'][0]['fileName']
         return filename
     except:
         return None
 
-
+# Download and load a registered model from comet_ml
 def get_registered_comet_model(filename, workspace=COMET_WORKSPACE, model=DEFAULT_MODEL, version=DEFAULT_VERSION, output_dir=MODELS_DIR):
     api = API()
     try:
@@ -63,35 +77,30 @@ def before_first_request():
     Hook to handle any initialization before the first request (e.g. load model,
     setup logging handler, etc.)
     """
-    # TODO: setup basic logging configuration
+    # setup logging configuration: log file, log level, log format ...
     logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', 
                         datefmt='%Y-%m-%d %H:%M:%S',
                         filename=LOG_FILE, 
                         level=logging.INFO, 
                         force=True)
 
-    # TODO: any other initialization before the first request (e.g. load default model)
+    # Other initialization before the first request (load default model and start logging)
     app.logger.info('Flask app started')
     filename = get_registered_comet_model_file_name()
-    global loaded_model
-    loaded_model = get_registered_comet_model(filename)
+    global curr_model
+    curr_model = get_registered_comet_model(filename)
+    global curr_model_name
+    curr_model_name = DEFAULT_MODEL
     app.logger.info('Default model loaded')
 
 
 @app.route("/logs", methods=["GET"])
 def logs():
     """Reads data from the log file and returns them as the response"""
-    # Get POST json data
+
     app.logger.info(f'API call: /logs')
-# 
-    app.logger.info('Flask app started')
-    filename = get_registered_comet_model_file_name()
-    global loaded_model
-    loaded_model = get_registered_comet_model(filename)
-    app.logger.info('Default model loaded')
-# 
-    # TODO: read the log file specified and return the data
-    # raise NotImplementedError("TODO: implement this endpoint")
+    
+    # read the log file
     with open(LOG_FILE, "r") as f:
         content = f.read()
 
@@ -136,10 +145,11 @@ def download_registry_model():
     # TODO: if yes, load that model and write to the log about the model change.  
     # eg: app.logger.info(<LOG STRING>)
     status_code = 200
-    global loaded_model
-
+    
+    global curr_model
+    
     if (is_downloaded):
-        loaded_model = joblib.load(f'{MODELS_DIR}/{filename}')
+        curr_model = joblib.load(f'{MODELS_DIR}/{filename}')
         app.logger.info('Model loaded from local repository')
 
     # TODO: if no, try downloading the model: if it succeeds, load that model and write to the log
@@ -148,11 +158,14 @@ def download_registry_model():
     else:
         model = get_registered_comet_model(workspace=workspace, model=model, version=version, filename=filename)
         if model:
-            loaded_model = model
+            curr_model = model
             app.logger.info('Model downloaded successfully from comet_ml')
         else:
             app.logger.info('Error occured while trying to download model comet_ml')
             status_code = 400
+
+    global curr_model_name
+    curr_model_name = model
 
     # Tip: you can implement a "CometMLClient" similar to your App client to abstract all of this
     # logic and querying of the CometML servers away to keep it clean here
@@ -183,11 +196,12 @@ def predict():
     json = request.get_json()
     app.logger.info(json)
 
-    global loaded_model
-    features = np.array(json['features']).reshape(-1, 1)
+    global curr_model
+    # features = np.array(json['features']).reshape(-1, 1)
     status_code = 200
     try:
-        preds = loaded_model.predict(features)
+        features = json[features_map[curr_model_name]]
+        preds = curr_model.predict(features)
         app.logger.info(preds)
     except Exception as e:
         preds = None
