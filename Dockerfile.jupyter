@@ -45,13 +45,18 @@ WORKDIR /code
 
 
 # TODO: add code, optionally a default model if you want 
+COPY . .
 
 
 # TODO: install libs
-
+RUN pip install --upgrade pip
+RUN pip install -r ift6758/requirements.txt
+RUN pip install -e ift6758/
 
 # TODO: expose ports (or do this in docker-compose)
-
+EXPOSE 9999
 
 # TODO: specify default command - this is not required because you can always specify the command
 # either with the docker run command or in the docker-compose file
+
+CMD ["sh", "-c", "jupyter-lab --notebook-dir=/code/notebooks --port=9999 --no-browser --ip=0.0.0.0 --allow-root"]
