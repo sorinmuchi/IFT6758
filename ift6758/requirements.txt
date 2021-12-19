@@ -1,3 +1,4 @@
+python-dotenv
 numpy
 pandas
 matplotlib
@@ -10,6 +11,7 @@ plotly
 setuptools
 flask
 gunicorn
+waitress
 scikit-learn
 comet_ml
 jupyterlab
