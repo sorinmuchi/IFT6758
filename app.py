@@ -114,11 +114,15 @@ def before_first_request():
     setup logging handler, etc.)
     """
     # setup logging configuration: log file, log level, log format ...
-    logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', 
-                        datefmt='%Y-%m-%d %H:%M:%S',
-                        filename=LOG_FILE, 
-                        level=logging.INFO, 
-                        force=True)
+    # logging.basicConfig(format='%(asctime)s %(levelname)-8s %(message)s', 
+    #                     datefmt='%Y-%m-%d %H:%M:%S',
+    #                     filename=LOG_FILE, 
+    #                     level=logging.INFO, 
+    #                     force=True)
+    fileHandler = logging.FileHandler(LOG_FILE)
+    fileHandler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s in %(module)s: %(message)s'))
+    app.logger.setLevel(logging.INFO)
+    app.logger.addHandler(fileHandler)
 
     # Other initialization before the first request (load default model and start logging)
     app.logger.info('Flask app started')
@@ -197,9 +201,7 @@ def predict():
     Handles POST requests made to http://IP_ADDRESS:PORT/predict
 
     Input JSON format:
-    {
-        features: (required)
-    }
+    list of XG probabilities  
 
     Returns predictions
     """
