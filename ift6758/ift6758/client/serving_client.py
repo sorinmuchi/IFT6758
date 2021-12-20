@@ -41,10 +41,14 @@ class AppClient:
         f = open('predicted.json')
         data = json.load(f)
         if str(gameId) in data.keys():
-            lastValue=eval(data[gameId])
-            lastValue.append(prediction)
-            d1 = {gameId: str(lastValue)}
+            lastValues=eval(data[gameId])
+            lastValues.extend(prediction)
+            d1 = {gameId: str(lastValues)}
             data.update(d1)
+        else:
+            d1 = {gameId: str(prediction)}
+            data.update(d1)
+
         with open('predicted.json', 'w') as outfile:
             json.dump(data, outfile)
 
