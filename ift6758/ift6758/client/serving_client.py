@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class gameClient:
+class AppClient:
     def __init__(self, ip: str = "0.0.0.0", port: int = 5000, features=None):
         self.base_url = f"http://{ip}:{port}"
         logger.info(f"Initializing client; base URL: {self.base_url}")
@@ -73,4 +73,4 @@ class gameClient:
 
 if __name__ == "__main__":
 
-    Client=gameClient("127.0.0.1",5000)
+    Client=AppClient("127.0.0.1",5000)
