@@ -34,7 +34,7 @@ class AppClient:
             gameId: to track the already predicted events
         """
         data= {
-            "features": X,
+            "features": X.to_json(),
         }
         response_API = requests.post(self.base_url+"/predict",data=data)
         prediction=json.loads(response_API.text)["prediction"]
