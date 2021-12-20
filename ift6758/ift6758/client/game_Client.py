@@ -22,7 +22,7 @@ def extractFeatures(fetchedData,gameId,idx=0):
             data = json.load(f)
         idx=int(data[gameId])
     except:
-        print('pb with track')
+
         idx=0
     fullGame=fetchedData
     game = fullGame['liveData']['plays']['allPlays']
@@ -525,7 +525,7 @@ def extractFeatures(fetchedData,gameId,idx=0):
     numFriendlySkaters = []
     numOpposingSkaters = []
     strength2 = []
-    print(penaltyLength)
+
     #####################################################################################################################################################################
     for g, team, event in zip(gameSeconds, df2["teamOfShooter"], df2["eventType"]):
 
@@ -696,7 +696,7 @@ def extractFeatures(fetchedData,gameId,idx=0):
     with open('tracked.json', 'w') as outfile:
         json.dump(data, outfile)
 
-    dfOut[idx + 1:].to_csv('example.csv')
+    #dfOut[idx + 1:].to_csv('example.csv')
     return dfOut[idx+1:]
 
 
@@ -712,7 +712,7 @@ class gameClient:
         gameId= str(2021020329)
         fetchedData = requests.get("https://statsapi.web.nhl.com/api/v1/game/"+gameId+"/feed/live/")
         TididedData=extractFeatures(json.loads(fetchedData.text),gameId,idx=idx)
-        print(TididedData)
+        #print(TididedData)
         return TididedData
 
 if __name__ == "__main__":
