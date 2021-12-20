@@ -36,8 +36,11 @@ class AppClient:
         data= {
             "features": X,
         }
-        response_API = requests.post(self.base_url+"/predict",data=data)
-        prediction=json.loads(response_API.text)["prediction"]
+        print(X)
+        response_API = requests.post(self.base_url+"/predict", json=X.to_json())
+        print(response_API, '-----------')
+        print(response_API.json, '**************')
+        prediction=json.loads(response_API.text)
 
 
 

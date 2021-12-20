@@ -201,7 +201,7 @@ def predict():
     Handles POST requests made to http://IP_ADDRESS:PORT/predict
 
     Input JSON format:
-    list of XG probabilities  
+    features (df.to_json())
 
     Returns predictions
     """
@@ -217,11 +217,14 @@ def predict():
     # feed model with features to generate prediction and log results
     try:
         df = pd.read_json(json)
-        features = df[features_map[curr_model_name]]
-        preds = curr_model.predict_proba(features)[:,1]
+        if df.empty:
+            features = df[features_map[curr_model_name]]
+            preds = curr_model.predict_proba(features)[:,1]
+        else:
+            preds = np.array([])
         app.logger.info(preds)
     except Exception as e:
-        preds = None
+        preds = np.array([])
         status_code = 400
         app.logger.info('Error occured in prediction')
 
