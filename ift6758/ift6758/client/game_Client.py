@@ -18,10 +18,6 @@ if not (os.path.isfile('tracked.json') and os.access('tracked.json', os.R_OK)):
 
 def extractFeatures(fetchedData,gameId,idx=0):
     try:
-
-        #f = open("tracker.txt", "r")
-        #idx=int(f.readline())
-        #f.close()
         with open('tracked.json') as f:
             data = json.load(f)
         idx=int(data[gameId])
@@ -682,19 +678,25 @@ def extractFeatures(fetchedData,gameId,idx=0):
            "strength2": strength2}
     dfToJoin = pd.DataFrame(dic)
 
-    df2 = df2.reset_index(drop=True)
+
+
 
     dfOut = pd.concat([df2, dfToJoin], axis=1)
+    dfOut = dfOut.reset_index(drop=True)
+
+    dfOut['Goal'] = dfOut['Goal'].astype(np.int64)
+
+    dfOut = dfOut.rename({'Goal': 'is_goal', 'distanceFromNet': 'distance'}, axis=1)
     lastLine=dfOut.iloc[-1:].index.values[0]
     f = open('tracked.json')
     data = json.load(f)
     d1 = {gameId: str(lastLine)}
     data.update(d1)
-    print(type(data))
+
     with open('tracked.json', 'w') as outfile:
         json.dump(data, outfile)
 
-
+    dfOut[idx + 1:].to_csv('example.csv')
     return dfOut[idx+1:]
 
 
