@@ -6,25 +6,26 @@ services:
     build:
       context: ./
       dockerfile: ./Dockerfile.serving
-#      args:
-#        ARG: <ARG>
-#    image: ift6758/serving:<TAG>
-#    ports:
-#      - <SERVING_PORT>:<SERVING_PORT>
-#    environment:
-#      DOCKER_ENV_VAR = ${LOCAL_ENV_VAR}
-###### Uncomment below when you're ready to add the final notebook container to your docker compose
-##  jupyter:
-##    build:
-##      context: ./
-##      dockerfile: ./Dockerfile.jupyter
-##      args:
-##        ARG: <ARG>
-##    image: ift6758/jupyter:<TAG>
-##    ports:
-##      - <JUPYTER_PORT>:<JUPYTER_PORT>
-##    environment:
-##      OTHER_DOCKER_ENV_VAR = ${OTHER_LOCAL_ENV_VAR}
-      
-
-     
+    image: ift6758/serving:1.0.0
+    ports:
+      - "6758:6758"
+    volumes:
+      - ./models:/code/models
+    environment:
+      - FLASK_LOG = ${FLASK_LOG}
+      - MODELS_DIR = ${MODELS_DIR}
+      - COMET_WORKSPACE = ${COMET_WORKSPACE}
+      - COMET_API_KEY = ${COMET_API_KEY}
+      - DEFAULT_MODEL = ${DEFAULT_MODEL}
+      - DEFAULT_VERSION = ${DEFAULT_VERSION}
+      - DEFAULT_FILENAME = ${DEFAULT_FILENAME}
+  jupyter:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.jupyter
+    image: ift6758/jupyter:1.0.0
+    ports:
+      - 9999:9999
+    volumes:
+      - ./ift6758/ift6758/notebooks:/code/notebooks
+      - ./models:/code/models
