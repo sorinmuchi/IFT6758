@@ -1,26 +1,30 @@
 # -*- coding: utf-8 -*-
-
+import os
 
 import requests
 import pandas as pd
 import logging
 import numpy as np
 import json
-
+import json
 logger = logging.getLogger(__name__)
 
-f = open("tracker.txt", "a")
+if not (os.path.isfile('tracked.json') and os.access('tracked.json', os.R_OK)):
+    with open('tracked.json', 'w') as outfile:
+        data = {}
+        json.dump(data, outfile)
 
-f.close()
 
 
-
-def extractFeatures(fetchedData,idx=0):
+def extractFeatures(fetchedData,gameId,idx=0):
     try:
 
-        f = open("tracker.txt", "r")
-        idx=int(f.readline())
-        f.close()
+        #f = open("tracker.txt", "r")
+        #idx=int(f.readline())
+        #f.close()
+        with open('tracked.json') as f:
+            data = json.load(f)
+        idx=int(data[gameId])
     except:
         print('pb with track')
         idx=0
@@ -682,8 +686,13 @@ def extractFeatures(fetchedData,idx=0):
 
     dfOut = pd.concat([df2, dfToJoin], axis=1)
     lastLine=dfOut.iloc[-1:].index.values[0]
-    f = open("tracker.txt", "w")
-    f.write(str(lastLine))
+    f = open('tracked.json')
+    data = json.load(f)
+    d1 = {gameId: str(lastLine)}
+    data.update(d1)
+    print(type(data))
+    with open('tracked.json', 'w') as outfile:
+        json.dump(data, outfile)
 
 
     return dfOut[idx:]
@@ -700,7 +709,7 @@ class gameClient:
     def pingGame(self, gameId="2021020329",idx=0) :
         gameId= str(2021020329)
         fetchedData = requests.get("https://statsapi.web.nhl.com/api/v1/game/"+gameId+"/feed/live/")
-        TididedData=extractFeatures(json.loads(fetchedData.text),idx=idx)
+        TididedData=extractFeatures(json.loads(fetchedData.text),gameId,idx=idx)
         print(TididedData)
         return TididedData
 
