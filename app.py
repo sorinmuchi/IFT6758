@@ -208,7 +208,7 @@ def predict():
     # Get POST json data
     app.logger.info(f'API call: /predict')
     json = request.get_json()
-    app.logger.info(json)
+    # app.logger.info(json)
 
     global curr_model
     # features = np.array(json['features']).reshape(-1, 1)
@@ -217,12 +217,11 @@ def predict():
     # feed model with features to generate prediction and log results
     try:
         df = pd.read_json(json)
-        if df.empty:
+        if not df.empty:
             features = df[features_map[curr_model_name]]
             preds = curr_model.predict_proba(features)[:,1]
         else:
             preds = np.array([])
-        app.logger.info(preds)
     except Exception as e:
         preds = np.array([])
         status_code = 400
