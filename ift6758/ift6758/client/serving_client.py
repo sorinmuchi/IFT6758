@@ -33,11 +33,8 @@ class AppClient:
             X (Dataframe): Input dataframe to submit to the prediction service.
             gameId: to track the already predicted events
         """
-        data= {
-            "features": X.to_json(),
-        }
-        response_API = requests.post(self.base_url+"/predict",data=data)
-        prediction=json.loads(response_API.text)["prediction"]
+        response_API = requests.post(self.base_url+"/predict", json=X.to_json())
+        prediction=json.loads(response_API.text)
 
 
 

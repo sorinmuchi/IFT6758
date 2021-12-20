@@ -525,7 +525,6 @@ def extractFeatures(fetchedData,gameId,idx=0):
     numFriendlySkaters = []
     numOpposingSkaters = []
     strength2 = []
-
     #####################################################################################################################################################################
     for g, team, event in zip(gameSeconds, df2["teamOfShooter"], df2["eventType"]):
 
@@ -712,10 +711,15 @@ class gameClient:
         gameId= str(2021020329)
         fetchedData = requests.get("https://statsapi.web.nhl.com/api/v1/game/"+gameId+"/feed/live/")
         TididedData=extractFeatures(json.loads(fetchedData.text),gameId,idx=idx)
-        #print(TididedData)
+
         return TididedData
 
 if __name__ == "__main__":
 
     Client=gameClient("127.0.0.1",5000)
     x=Client.pingGame()
+    
+    from serving_client import AppClient
+    serving = AppClient("127.0.0.1",6758)
+    res = serving.predict(x, "2021020329")
+    print(res)
