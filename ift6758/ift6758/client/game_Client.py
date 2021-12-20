@@ -695,7 +695,7 @@ def extractFeatures(fetchedData,gameId,idx=0):
         json.dump(data, outfile)
 
 
-    return dfOut[idx:]
+    return dfOut[idx+1:]
 
 
 

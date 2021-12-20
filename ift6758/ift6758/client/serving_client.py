@@ -1,4 +1,6 @@
 import json
+import os
+
 import requests
 import pandas as pd
 import logging
@@ -8,14 +10,20 @@ logger = logging.getLogger(__name__)
 
 
 class AppClient:
+
     def __init__(self, ip: str = "0.0.0.0", port: int = 5000, features=None):
+        if not (os.path.isfile('predicted.json') and os.access('predicted.json', os.R_OK)):
+            with open('predicted.json', 'w') as outfile:
+                data = {}
+                json.dump(data, outfile)
         self.base_url = f"http://{ip}:{port}"
         logger.info(f"Initializing client; base URL: {self.base_url}")
 
 
+
         # any other potential initialization
 
-    def predict(self, X: pd.DataFrame) -> pd.DataFrame:
+    def predict(self, X: pd.DataFrame,gameId) -> list:
         """
         Formats the inputs into an appropriate payload for a POST request, and queries the
         prediction service. Retrieves the response from the server, and processes it back into a
@@ -23,16 +31,27 @@ class AppClient:
         
         Args:
             X (Dataframe): Input dataframe to submit to the prediction service.
+            gameId: to track the already predicted events
         """
         data= {
             "features": X,
         }
         response_API = requests.post(self.base_url+"/predict",data=data)
         prediction=json.loads(response_API.text)["prediction"]
-        #columns are missing, make sure values are seperated to get one in each column (list ...)
-        prediction_=eval(prediction)
-        results=pd.DataFrame(prediction_,columns="")
-        return results
+
+
+
+        f = open('predicted.json')
+        data = json.load(f)
+        if str(gameId) in data.keys():
+            lastValue=eval(data[gameId])
+            lastValue.append(prediction)
+            d1 = {gameId: str(lastValue)}
+            data.update(d1)
+        with open('predicted.json', 'w') as outfile:
+            json.dump(data, outfile)
+
+        return eval(data[gameId])
 
         #raise NotImplementedError("TODO: implement this function")
 
