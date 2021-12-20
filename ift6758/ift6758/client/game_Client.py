@@ -718,7 +718,6 @@ if __name__ == "__main__":
 
     Client=gameClient("127.0.0.1",5000)
     x=Client.pingGame()
-    
     from serving_client import AppClient
     serving = AppClient("127.0.0.1",6758)
     res = serving.predict(x, "2021020329")
