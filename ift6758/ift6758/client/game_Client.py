@@ -687,27 +687,29 @@ def extractFeatures(fetchedData,gameId,team_Shooter,idx=0):
     dfOut = dfOut.rename({'Goal': 'is_goal', 'distanceFromNet': 'distance'}, axis=1)
     dfOut=dfOut[dfOut['teamOfShooter']==str(team_Shooter)]
     dfOut = dfOut.reset_index(drop=True)
-    lastLine=dfOut.iloc[-1:].index.values[0]
+    if not  (dfOut.empty ):
+        lastLine=dfOut.iloc[-1:].index.values[0]
 
 
-    f = open('tracked.json')
-    data = json.load(f)
+        f = open('tracked.json')
+        data = json.load(f)
 
 
-    if (str(gameId) in data.keys() ) and (team_Shooter in data[gameId].keys()):
+        if (str(gameId) in data.keys() ) and (team_Shooter in data[gameId].keys()):
 
-        data[gameId][team_Shooter]=str(lastLine)
+            data[gameId][team_Shooter]=str(lastLine)
 
-    elif str(gameId) in data.keys():
+        elif str(gameId) in data.keys():
 
-        data[gameId][team_Shooter] =str(lastLine)
-    else :
-        data.update({gameId: {team_Shooter: str(lastLine)}})
+            data[gameId][team_Shooter] =str(lastLine)
+        else :
+            data.update({gameId: {team_Shooter: str(lastLine)}})
 
-    with open('tracked.json', 'w') as outfile:
-        json.dump(data, outfile)
+        with open('tracked.json', 'w') as outfile:
+            json.dump(data, outfile)
 
-    return dfOut[idx+1:]
+        return dfOut[idx+1:]
+    return dfOut
 
 
 
