@@ -21,7 +21,6 @@ def extractFeatures(fetchedData,gameId,team_Shooter,idx=0):
         with open('tracked.json') as f:
             data = json.load(f)
         idx=int(data[gameId][team_Shooter])
-        print("found it ", idx)
     except:
         idx=0
 
@@ -686,26 +685,26 @@ def extractFeatures(fetchedData,gameId,team_Shooter,idx=0):
     dfOut['Goal'] = dfOut['Goal'].astype(np.int64)
 
     dfOut = dfOut.rename({'Goal': 'is_goal', 'distanceFromNet': 'distance'}, axis=1)
-    dfOut=dfOut[dfOut['teamOfShooter']=="Washington Capitals"]
+    print(dfOut['teamOfShooter'])
+    dfOut=dfOut[dfOut['teamOfShooter']==str(team_Shooter)]
     dfOut = dfOut.reset_index(drop=True)
-
-
-
+    print(dfOut)
     lastLine=dfOut.iloc[-1:].index.values[0]
 
 
     f = open('tracked.json')
     data = json.load(f)
-    print(type(data))
-    if str(gameId) in data.keys() and team_Shooter in data[gameId].keys():
 
-        data[gameId].update({team_Shooter: str(lastLine)})
-    else:
-        data[gameId]={}
-        data[gameId][team_Shooter]= str(lastLine)
 
-    print(data)
+    if (str(gameId) in data.keys() ) and (team_Shooter in data[gameId].keys()):
 
+        data[gameId][team_Shooter]=str(lastLine)
+        print(data)
+    elif str(gameId) in data.keys():
+
+        data[gameId][team_Shooter] =str(lastLine)
+    else :
+        data.update({gameId: {team_Shooter: str(lastLine)}})
 
     with open('tracked.json', 'w') as outfile:
         json.dump(data, outfile)
@@ -721,18 +720,19 @@ class gameClient:
 
         logger.info(f"Initializing ClientGame; base URL: ")
 
-    def pingGame(self, gameId="2021020329",idx=0) :
-        gameId= str(2021020329)
+    def pingGame(self, team,gameId="2021020329",idx=0) :
         fetchedData = requests.get("https://statsapi.web.nhl.com/api/v1/game/"+gameId+"/feed/live/")
-        TididedData=extractFeatures(json.loads(fetchedData.text),gameId,'"Washington Capitals"',idx=idx)
+        TididedData=extractFeatures(json.loads(fetchedData.text),gameId,team,idx=idx)
 
         return TididedData
 
 if __name__ == "__main__":
 
     Client=gameClient("127.0.0.1",5000)
-    x=Client.pingGame()
+    team="Washington Capitals"
+    team1="Carolina Hurricanes"
+    x=Client.pingGame(team)
     from serving_client import AppClient
     serving = AppClient("127.0.0.1",5000)
-    res = serving.predict(x, "2021020329","Washington Capitals")
+    res = serving.predict(x, "2021020329",team)
     print(res)
