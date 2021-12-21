@@ -218,7 +218,11 @@ def predict():
     try:
         df = pd.read_json(json)
         if not df.empty:
-            features = df[features_map[curr_model_name]]
+            if not features_map[curr_model_name]:
+                features = df[features_map[curr_model_name]]
+            else:
+                # an empty value means using all the features 
+                features = df 
             preds = curr_model.predict_proba(features)[:,1]
         else:
             preds = np.array([])
