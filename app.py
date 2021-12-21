@@ -62,7 +62,8 @@ def get_registered_comet_model(filename, workspace=COMET_WORKSPACE, model=DEFAUL
         api.download_registry_model({workspace}, model, version, output_dir, expand=True)
         model = joblib.load(f'{output_dir}/{filename}')
         return model
-    except:
+    except ValueError:
+        app.logger.info(str(ValueError))
         return None
 
 
@@ -236,3 +237,5 @@ def predict():
 
     # return response and set status code
     return jsonify(preds.tolist()), status_code # response must be json serializable!
+
+app.run(debug=True)
