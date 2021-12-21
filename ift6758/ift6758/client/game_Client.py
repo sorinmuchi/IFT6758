@@ -721,4 +721,4 @@ if __name__ == "__main__":
     from serving_client import AppClient
     serving = AppClient("127.0.0.1",5000)
     res = serving.predict(x, "2021020329")
-    print(res)
+    # print(res)
