@@ -41,10 +41,8 @@ class AppClient:
 
         f = open('predicted.json')
         data = json.load(f)
-        print(teamOfShooter)
-        print(data[gameId].keys())
+
         if (str(gameId) in data.keys() ) and (teamOfShooter in data[gameId].keys()):
-            print("extending!")
             lastValues = eval(data[gameId][teamOfShooter])
             lastValues.extend(prediction)
             data[gameId].update({teamOfShooter: str(lastValues)})

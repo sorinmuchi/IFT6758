@@ -685,10 +685,8 @@ def extractFeatures(fetchedData,gameId,team_Shooter,idx=0):
     dfOut['Goal'] = dfOut['Goal'].astype(np.int64)
 
     dfOut = dfOut.rename({'Goal': 'is_goal', 'distanceFromNet': 'distance'}, axis=1)
-    print(dfOut['teamOfShooter'])
     dfOut=dfOut[dfOut['teamOfShooter']==str(team_Shooter)]
     dfOut = dfOut.reset_index(drop=True)
-    print(dfOut)
     lastLine=dfOut.iloc[-1:].index.values[0]
 
 
@@ -699,7 +697,7 @@ def extractFeatures(fetchedData,gameId,team_Shooter,idx=0):
     if (str(gameId) in data.keys() ) and (team_Shooter in data[gameId].keys()):
 
         data[gameId][team_Shooter]=str(lastLine)
-        print(data)
+
     elif str(gameId) in data.keys():
 
         data[gameId][team_Shooter] =str(lastLine)
