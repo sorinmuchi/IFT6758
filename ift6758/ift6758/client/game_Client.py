@@ -16,14 +16,14 @@ if not (os.path.isfile('tracked.json') and os.access('tracked.json', os.R_OK)):
 
 
 
-def extractFeatures(fetchedData,gameId,idx=0):
+def extractFeatures(fetchedData,gameId,teamOfShooter,idx=0):
     try:
         with open('tracked.json') as f:
             data = json.load(f)
         idx=int(data[gameId])
     except:
-
         idx=0
+
     fullGame=fetchedData
     game = fullGame['liveData']['plays']['allPlays']
     if len(game) == 0:
@@ -686,6 +686,7 @@ def extractFeatures(fetchedData,gameId,idx=0):
     dfOut['Goal'] = dfOut['Goal'].astype(np.int64)
 
     dfOut = dfOut.rename({'Goal': 'is_goal', 'distanceFromNet': 'distance'}, axis=1)
+    dfOut=dfOut[dfOut['teamOfShooter']==teamOfShooter]
     lastLine=dfOut.iloc[-1:].index.values[0]
     f = open('tracked.json')
     data = json.load(f)
@@ -710,7 +711,7 @@ class gameClient:
     def pingGame(self, gameId="2021020329",idx=0) :
         gameId= str(2021020329)
         fetchedData = requests.get("https://statsapi.web.nhl.com/api/v1/game/"+gameId+"/feed/live/")
-        TididedData=extractFeatures(json.loads(fetchedData.text),gameId,idx=idx)
+        TididedData=extractFeatures(json.loads(fetchedData.text),gameId,'"Washington Capitals"',idx=idx)
 
         return TididedData
 
@@ -720,5 +721,5 @@ if __name__ == "__main__":
     x=Client.pingGame()
     from serving_client import AppClient
     serving = AppClient("127.0.0.1",5000)
-    res = serving.predict(x, "2021020329")
-    # print(res)
+    res = serving.predict(x, "2021020329","Washington Capitals")
+    print(res)
