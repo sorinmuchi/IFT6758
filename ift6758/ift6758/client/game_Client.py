@@ -15,6 +15,18 @@ if not (os.path.isfile('tracked.json') and os.access('tracked.json', os.R_OK)):
         json.dump(data, outfile)
 
 
+def getTeams(gameId):
+    fetchedData = requests.get("https://statsapi.web.nhl.com/api/v1/game/" + gameId + "/feed/live/")
+    game =json.loads(fetchedData.text)['liveData']['plays']['allPlays']
+    teamOfShooter = set()
+    for x in game:
+        if str(x['result']['event']) == 'Shot' or str(x['result']['event']) == 'Goal':
+            teamOfShooter.add(x['team']['name'])
+
+    return teamOfShooter
+
+
+
 
 def extractFeatures(fetchedData,gameId,team_Shooter,idx=0):
     try:
@@ -731,6 +743,7 @@ if __name__ == "__main__":
     Client=gameClient("127.0.0.1",5000)
     team="Washington Capitals"
     team1="Carolina Hurricanes"
+    print(getTeams("2021020329"))
     x=Client.pingGame(team)
     from serving_client import AppClient
     serving = AppClient("127.0.0.1",5000)
