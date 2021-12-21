@@ -23,7 +23,7 @@ class AppClient:
 
         # any other potential initialization
 
-    def predict(self, X: pd.DataFrame,gameId) -> list:
+    def predict(self, X: pd.DataFrame,gameId,teamOfShooter) -> list:
         """
         Formats the inputs into an appropriate payload for a POST request, and queries the
         prediction service. Retrieves the response from the server, and processes it back into a
@@ -41,21 +41,19 @@ class AppClient:
 
         f = open('predicted.json')
         data = json.load(f)
-        if str(gameId) in data.keys():
-            lastValues=eval(data[gameId])
+
+        if str(gameId) in data.keys() and str(teamOfShooter) in data[gameId].keys() :
+            lastValues = eval(data[gameId][teamOfShooter])
             lastValues.extend(prediction)
-            d1 = {gameId: str(lastValues)}
-            data.update(d1)
+            data[gameId].update({teamOfShooter: str(lastValues)})
         else:
-            d1 = {gameId: str(prediction)}
-            data.update(d1)
+            data.update({gameId: {teamOfShooter: str(prediction)}})
 
         with open('predicted.json', 'w') as outfile:
             json.dump(data, outfile)
 
-        return eval(data[gameId])
+        return eval(data[gameId][teamOfShooter])
 
-        #raise NotImplementedError("TODO: implement this function")
 
 
     def logs(self) -> str:
@@ -64,7 +62,6 @@ class AppClient:
         return json.loads(response_API.text)["content"]
 
 
-        #raise NotImplementedError("TODO: implement this function")
 
     def download_registry_model(self, workspace: str, model: str, version: str) -> dict:
         """
@@ -90,7 +87,6 @@ class AppClient:
         response_API = requests.post(self.base_url+"/download_registry_model",data=data)
         return json.loads(response_API.text)
 
-        #raise NotImplementedError("TODO: implement this function")
 
 if __name__ == "__main__":
 

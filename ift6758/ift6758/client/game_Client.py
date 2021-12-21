@@ -16,14 +16,15 @@ if not (os.path.isfile('tracked.json') and os.access('tracked.json', os.R_OK)):
 
 
 
-def extractFeatures(fetchedData,gameId,idx=0):
+def extractFeatures(fetchedData,gameId,team_Shooter,idx=0):
     try:
         with open('tracked.json') as f:
             data = json.load(f)
-        idx=int(data[gameId])
+        idx=int(data[gameId][team_Shooter])
+        print("found it ", idx)
     except:
-
         idx=0
+
     fullGame=fetchedData
     game = fullGame['liveData']['plays']['allPlays']
     if len(game) == 0:
@@ -681,21 +682,34 @@ def extractFeatures(fetchedData,gameId,idx=0):
 
 
     dfOut = pd.concat([df2, dfToJoin], axis=1)
-    dfOut = dfOut.reset_index(drop=True)
 
     dfOut['Goal'] = dfOut['Goal'].astype(np.int64)
 
     dfOut = dfOut.rename({'Goal': 'is_goal', 'distanceFromNet': 'distance'}, axis=1)
+    dfOut=dfOut[dfOut['teamOfShooter']=="Washington Capitals"]
+    dfOut = dfOut.reset_index(drop=True)
+
+
+
     lastLine=dfOut.iloc[-1:].index.values[0]
+
+
     f = open('tracked.json')
     data = json.load(f)
-    d1 = {gameId: str(lastLine)}
-    data.update(d1)
+    print(type(data))
+    if str(gameId) in data.keys() and team_Shooter in data[gameId].keys():
+
+        data[gameId].update({team_Shooter: str(lastLine)})
+    else:
+        data[gameId]={}
+        data[gameId][team_Shooter]= str(lastLine)
+
+    print(data)
+
 
     with open('tracked.json', 'w') as outfile:
         json.dump(data, outfile)
 
-    #dfOut[idx + 1:].to_csv('example.csv')
     return dfOut[idx+1:]
 
 
@@ -710,7 +724,7 @@ class gameClient:
     def pingGame(self, gameId="2021020329",idx=0) :
         gameId= str(2021020329)
         fetchedData = requests.get("https://statsapi.web.nhl.com/api/v1/game/"+gameId+"/feed/live/")
-        TididedData=extractFeatures(json.loads(fetchedData.text),gameId,idx=idx)
+        TididedData=extractFeatures(json.loads(fetchedData.text),gameId,'"Washington Capitals"',idx=idx)
 
         return TididedData
 
@@ -720,5 +734,5 @@ if __name__ == "__main__":
     x=Client.pingGame()
     from serving_client import AppClient
     serving = AppClient("127.0.0.1",5000)
-    res = serving.predict(x, "2021020329")
-    # print(res)
+    res = serving.predict(x, "2021020329","Washington Capitals")
+    print(res)
