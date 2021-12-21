@@ -208,7 +208,7 @@ def predict():
     # Get POST json data
     app.logger.info(f'API call: /predict')
     json = request.get_json()
-    # app.logger.info(json)
+    app.logger.info(json)
 
     global curr_model
     # features = np.array(json['features']).reshape(-1, 1)
@@ -218,7 +218,7 @@ def predict():
     try:
         df = pd.read_json(json)
         if not df.empty:
-            if not features_map[curr_model_name]:
+            if features_map[curr_model_name]:
                 features = df[features_map[curr_model_name]]
             else:
                 # an empty value means using all the features 
@@ -235,3 +235,4 @@ def predict():
 
     # return response and set status code
     return jsonify(preds.tolist()), status_code # response must be json serializable!
+
