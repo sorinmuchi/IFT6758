@@ -235,4 +235,3 @@ def predict():
 
     # return response and set status code
     return jsonify(preds.tolist()), status_code # response must be json serializable!
-
