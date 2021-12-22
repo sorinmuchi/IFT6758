@@ -183,7 +183,7 @@ def extractFeatures(fetchedData,gameId,team_Shooter,idx=0):
     #################################################(18/20)
     # Populate array of totalPlayTime
     totalPlayTime = []
-    stringTotalPlayTime = ""
+    stringTotalPlayTime = "20:00"
     i = 0
     for y in fullGame['liveData']['plays']['allPlays']:
         i += 1
