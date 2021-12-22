@@ -87,10 +87,10 @@ class AppClient:
         data={
             'workspace':workspace,
             'model': model,
-            'version':version,
-            'filename':'DownloadedModel'
+            'version':version
         }
-        response_API = requests.post(self.base_url+"/download_registry_model",data=data)
+        
+        response_API = requests.post(self.base_url+"/download_registry_model", json=data)
         return json.loads(response_API.text)
 
 
