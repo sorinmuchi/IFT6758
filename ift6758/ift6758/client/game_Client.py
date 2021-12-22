@@ -738,14 +738,14 @@ class gameClient:
 
         return TididedData
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    Client=gameClient("127.0.0.1",5000)
-    team="Washington Capitals"
-    team1="Carolina Hurricanes"
-    print(getTeams("2021020329"))
-    x=Client.pingGame(team)
-    from serving_client import AppClient
-    serving = AppClient("127.0.0.1",5000)
-    res = serving.predict(x, "2021020329",team)
-    print(res)
+    # Client=gameClient("127.0.0.1",5000)
+    # team="Washington Capitals"
+    # team1="Carolina Hurricanes"
+    # print(getTeams("2021020329"))
+    # x=Client.pingGame(team)
+    # from serving_client import AppClient
+    # serving = AppClient("127.0.0.1",5000)
+    # res = serving.predict(x, "2021020329",team)
+    # print(res)
