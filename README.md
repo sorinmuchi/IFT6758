@@ -41,7 +41,7 @@ To run the server-only:  `./build.sh && ./run.sh`.
 - Backend port: `6758:6758`
 
 
-**Files**
+**Volumes**
 - The assets located in the `models` and `notebooks` directories are two-way synced between the host and Docker container, using Docker `volumes`. Thus:
   - Any changes made locally will be reflected inside the Docker container.
   - Any changes made inside the Docker container will be presisted locally.
