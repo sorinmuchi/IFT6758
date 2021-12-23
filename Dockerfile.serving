@@ -18,7 +18,7 @@ WORKDIR /code
 COPY . .
 
 # Install necessary libraries
-RUN ["sh", "-c", "pip install --upgrade pip; pip install -r ift6758/requirements.txt; pip install -e ift6758/"]
+RUN ["sh", "-c", "pip install -r ift6758/requirements.txt; pip install -e ift6758/"]
 
 # Expose container port for incoming http requests
 EXPOSE 6758
