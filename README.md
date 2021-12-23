@@ -15,6 +15,7 @@ The first time this command is run it will also build the Docker images.
 
 ### Test the Jupyter Notebook Dashboard
 1. Once `docker compose up` has started the two containers, search in your terminal window for a URL like this one `http://127.0.0.1:9999/lab?token=a_unique_token_here`.
+   ![How to open Jupyter Lab](figures/start_jupyter.png)
 2. Open this URL in a web browser. A Jupyter Lab instance should open.
 3. Open and Run the notebook called `jupyter_Dashboard.ipynb`
 inside the Jupyter Labs instance.
