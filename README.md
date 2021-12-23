@@ -13,8 +13,19 @@ To run the project: `docker compose up`.
 
 The first time this command is run it will also build the Docker images.
 
-### Rebuild Container Images
+## Rebuild Container Images
 If required to re-build the images: `docker compose build`.
 
 ## Convenience Testing Scripts - Server-Only
 To run the server-only:  `./build.sh && ./run.sh`.
+
+## Project Details
+Ports
+- Frontend port: `9999`
+- Backend port: `6758`
+
+
+Assets
+- The assets located in the `models` and `notebooks` directories are synced, between the host and Docker container, using Docker `volumes`. This is a two-way sync, thus:
+  - Any changes made locally will be reflected inside the Docker container.
+  - Any changes made inside the Docker container will be presisted locally.
