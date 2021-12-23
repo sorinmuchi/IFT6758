@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class AppClient:
 
-    def __init__(self, ip: str = "0.0.0.0", port: int = 5000, features=None):
+    def __init__(self, ip: str = "0.0.0.0", port: int = 6758):
         if not (os.path.isfile('predicted.json') and os.access('predicted.json', os.R_OK)):
             with open('predicted.json', 'w') as outfile:
                 data = {}

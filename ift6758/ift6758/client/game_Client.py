@@ -728,7 +728,7 @@ def extractFeatures(fetchedData,gameId,team_Shooter,idx=0):
 
 
 class gameClient:
-    def __init__(self, ip: str = "0.0.0.0", port: int = 5000, features=None):
+    def __init__(self):
 
         logger.info(f"Initializing ClientGame; base URL: ")
 
