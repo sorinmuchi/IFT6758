@@ -5,8 +5,6 @@ import requests
 import pandas as pd
 import logging
 
-from app import logs
-
 
 logger = logging.getLogger(__name__)
 
