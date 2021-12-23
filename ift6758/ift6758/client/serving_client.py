@@ -5,6 +5,8 @@ import requests
 import pandas as pd
 import logging
 
+from app import logs
+
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +67,7 @@ class AppClient:
     def logs(self) -> str:
         """Get server logs"""
         response_API =  requests.get(self.base_url + "/logs")
-        return json.loads(response_API.text)["content"]
+        return json.loads(response_API.text).split('\n')
 
 
 
